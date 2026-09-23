@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ray-trinkets — build a generic orbit</title>
+<title>ray-trinkets: build a generic orbit</title>
 <style>
   :root{--bg:#0b0e14;--panel:#151a24;--ink:#e6e9ef;--muted:#98a2b3;--line:#2a3342;--field:#0f141d;}
   *{box-sizing:border-box;}
@@ -15,7 +15,7 @@
   label{font-size:12px;color:var(--muted);display:block;margin:14px 0 6px;}
   .row{display:flex;gap:8px;flex-wrap:wrap;}
   .row button{flex:1 1 auto;min-width:56px;padding:8px 6px;border-radius:8px;border:1px solid var(--line);background:var(--field);color:var(--ink);font-size:12px;cursor:pointer;}
-  .row button.active{background:var(--accent,#1f6feb);border-color:var(--accent,#1f6feb);color:#fff;font-weight:600;}
+  .row button.active{background:var(--accent,#1f6feb);border-color:var(--accent,#1f6feb);color:#fff;}
   button:focus-visible,input:focus-visible{outline:2px solid var(--accent,#1f6feb);outline-offset:2px;}
   .sliderRow{display:flex;align-items:center;gap:10px;}
   .sliderRow input[type=range]{flex:1;accent-color:var(--accent,#1f6feb);}
@@ -35,28 +35,46 @@
   #caption{position:absolute;left:0;right:0;bottom:0;padding:14px 20px;background:linear-gradient(transparent,rgba(6,8,12,.9));font-size:13px;color:var(--muted);pointer-events:none;}
   #hullMsg{font-size:11px;color:#e8833a;margin-top:6px;}
   .btnRow{margin-top:14px;}
+  /* The point controls above Show as, packed tighter so the list has more room. */
+  .compact label{margin:8px 0 2px;}
+  .compact .groupRow{display:flex;align-items:center;gap:10px;margin-top:10px;}
+  .compact .groupRow label{margin:0;flex:none;}
+  .compact .groupRow .row{flex:1;}
+  .compact .row button{padding:5px 6px;}
+  .compact .step{width:24px;height:22px;}
+  .compact .btnRow{margin-top:8px;}
+  .compact .ghost{padding:5px 6px;}
   .ghost{width:100%;padding:9px 6px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:12px;cursor:pointer;}
   .ghost:hover{border-color:var(--accent,#1f6feb);}
 
-  .solidList{display:flex;flex-direction:column;gap:4px;}
-  .solidList .solid,.solidHead{display:grid;grid-template-columns:48px 1fr 1fr 22px;align-items:center;gap:8px;}
-  .solidList .solid{padding:5px 8px 5px 5px;border-radius:7px;border:1px solid var(--line);background:var(--field);
-    color:var(--ink);font-size:12px;}
-  .solidList .solid:hover{border-color:var(--g);}
-  .solidList .solid.active{background:var(--g);border-color:var(--g);color:#0b0e14;}
-  .solidList .solid button.pick{padding:1px 0;border:0;background:none;color:inherit;font:inherit;text-align:left;
-    cursor:pointer;hyphens:auto;overflow-wrap:anywhere;}
-  .solidList .solid button.pick:hover{text-decoration:underline;}
-  .solidList .solid.active .shown{font-weight:700;}
+  .solidList{display:flex;flex-direction:column;gap:3px;}
+  .solidList .solid,.solidHead{display:grid;grid-template-columns:48px 1fr 1fr 22px;align-items:center;gap:6px;}
+  /* Always two lines tall: two-word names split at the space, one-word names sit
+     centred, so neighbouring buttons match. */
+  .solidList .solid button.pick{display:flex;align-items:center;height:calc(2.4em + 6px);padding:2px 7px;
+    border:1px solid var(--line);border-radius:6px;background:var(--field);
+    color:var(--ink);font:inherit;font-size:12px;line-height:1.2;text-align:left;cursor:pointer;
+    hyphens:auto;overflow-wrap:anywhere;}
+  .solidList .solid button.pick:hover{border-color:var(--hl);}
+  /* Every button naming the shape on screen, e.g. both "cube" buttons. */
+  .solidList .solid button.pick.shown{background:var(--hl);border-color:var(--hl);color:#0b0e14;}
   .solidList .tags{display:flex;gap:4px;}
   .solidList .tag{width:22px;height:20px;padding:0;border:0;border-radius:5px;display:flex;align-items:center;justify-content:center;
     font:inherit;font-size:11px;font-weight:800;color:#0b0e14;background:var(--tg);cursor:pointer;}
-  .solidList .tag.current{background:#0b0e14;color:var(--tg);}
+  .solidList .tag.current{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink);}
   .solidList .dots{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;}
-  .solidList .solid.active .dots{color:#0b0e14;}
-  .solidHead{font-size:11px;color:var(--muted);margin:14px 0 6px;padding:0 8px 0 5px;}
+  /* Collapsed by default; the arrow turns when opened. */
+  .listTitle{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:18px;
+    font-size:12px;color:var(--muted);cursor:pointer;list-style:none;user-select:none;}
+  .listTitle::-webkit-details-marker{display:none;}
+  .listTitle:hover{color:var(--ink);}
+  .listTitle > span:first-child::before{content:'▸';display:inline-block;width:1em;transition:transform .15s;}
+  details[open] > .listTitle > span:first-child::before{transform:rotate(90deg);}
+  .listTitle .key{font-size:11px;}
+  .solids:not([open]) .listTitle .key{display:none;}
+  .solidHead{font-size:11px;color:var(--muted);margin:14px 0 6px;}
   .solidHead span:last-child{text-align:right;}
-  .solidList .pv{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-left:6px;opacity:.7;}
+  .solidList .pv{margin-left:4px;font-size:11px;opacity:.8;}
 </style>
 </head>
 <body>
@@ -70,17 +88,17 @@
     <div id="caption"></div>
   </div>
   <div id="panel">
-    <h1>ray-trinkets — build a generic orbit</h1>
-    <label>Rotation group</label>
-    <div class="row" id="groupButtons"></div>
+    <h1>ray-trinkets: build a generic orbit</h1>
+    <div class="compact">
+    <div class="groupRow"><label>Rotation group</label><div class="row" id="groupButtons"></div></div>
 
-    <label for="theta">Generating point — polar angle <span id="thetaVal"></span></label>
+    <label for="theta">Generating point: polar angle <span id="thetaVal"></span></label>
     <div class="sliderRow">
       <button class="step" data-for="theta" data-d="-1" aria-label="Polar angle down 1°">‹</button>
       <input type="range" id="theta" min="0" max="180" step="1" value="6">
       <button class="step" data-for="theta" data-d="1" aria-label="Polar angle up 1°">›</button>
     </div>
-    <label for="phi">Generating point — azimuth <span id="phiVal"></span></label>
+    <label for="phi">Generating point: azimuth <span id="phiVal"></span></label>
     <div class="sliderRow">
       <button class="step" data-for="phi" data-d="-1" aria-label="Azimuth down 1°">‹</button>
       <input type="range" id="phi" min="0" max="360" step="1" value="0">
@@ -88,6 +106,7 @@
     </div>
 
     <div class="btnRow"><button class="ghost" id="randomize">Randomize point</button></div>
+    </div>
 
     <label style="margin-top:18px;">Show as</label>
     <div class="row" id="formButtons">
@@ -100,9 +119,21 @@
 
     <label class="check"><input type="checkbox" id="rotate" checked> slowly rotate</label>
 
-    <label style="margin-top:18px;">Jump to a solid</label>
-    <div class="solidHead"><span>group</span><span>vertex hull</span><span>face dual</span><span>dots</span></div>
-    <div class="solidList" id="presets"></div>
+    <details class="solids">
+      <summary class="listTitle"><span>Jump to a solid</span><span class="key">★ every dot sits on a rotation axis</span></summary>
+      <div class="solidHead"><span>group</span><span>vertex hull</span><span>face dual</span><span>dots</span></div>
+      <div class="solidList" id="presets"></div>
+    </details>
+
+    <details class="looks">
+      <summary class="listTitle"><span>Appearance</span></summary>
+      <label for="spin">Spin speed <span id="spinVal"></span></label>
+      <div class="sliderRow"><input type="range" id="spin" min="0" max="3" step="0.1" value="1"></div>
+      <label for="stalk">Stalk thickness <span id="stalkVal"></span></label>
+      <div class="sliderRow"><input type="range" id="stalk" min="0.3" max="2.5" step="0.1" value="1"></div>
+      <label for="tip">End-ball size <span id="tipVal"></span></label>
+      <div class="sliderRow"><input type="range" id="tip" min="0.4" max="2.5" step="0.1" value="1"></div>
+    </details>
   </div>
 </div>
 
@@ -306,18 +337,21 @@ function buildSpike(rays, color){
   const grp=new THREE.Group();
   const sphereMat=new THREE.MeshStandardMaterial({color:0x2a2d34, roughness:0.7, metalness:0.1});
   grp.add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), sphereMat));
-  const spikeMat=new THREE.MeshStandardMaterial({color, roughness:0.5, metalness:0.15, flatShading:true});
+  // Smooth shading, so the rods and tip balls read as round rather than faceted.
+  const spikeMat=new THREE.MeshStandardMaterial({color, roughness:0.5, metalness:0.15});
   // The seed spike (the one the sliders move) is rays[0]: orbit() applies the identity
   // rotation first. Only its tip is marked, in yellow.
-  const seedTipMat=new THREE.MeshStandardMaterial({color:0xffd23f, roughness:0.5, metalness:0.15, flatShading:true});
+  const seedTipMat=new THREE.MeshStandardMaterial({color:0xffd23f, roughness:0.5, metalness:0.15});
   const up=new THREE.Vector3(0,1,0), len=0.7;
+  const cylGeo=new THREE.CylinderGeometry(0.035*looks.stalk,0.035*looks.stalk,len,16),
+        tipGeo=new THREE.SphereGeometry(0.05*looks.tip,24,16);
   rays.forEach((r,i)=>{
     const v=new THREE.Vector3(...r).normalize();
-    const cyl=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,len,14), spikeMat);
+    const cyl=new THREE.Mesh(cylGeo, spikeMat);
     cyl.quaternion.setFromUnitVectors(up, v);
     cyl.position.copy(v.clone().multiplyScalar(0.42+len/2));
     grp.add(cyl);
-    const tip=new THREE.Mesh(new THREE.SphereGeometry(0.05,14,12), i===0 ? seedTipMat : spikeMat);
+    const tip=new THREE.Mesh(tipGeo, i===0 ? seedTipMat : spikeMat);
     tip.position.copy(v.clone().multiplyScalar(0.42+len));
     grp.add(tip);
   });
@@ -349,7 +383,8 @@ function buildPolyhedron(polys, color){
 function frame(maxR){
   const r=paneRects()[0], aspect=r.w/r.h;
   const vHalf=Math.PI/8, hHalf=Math.atan(Math.tan(vHalf)*aspect);
-  const dist=Math.max(2.0, maxR/Math.sin(Math.min(vHalf,hHalf))*1.08);
+  // 1.3: leave a margin, so the solid fills about three quarters of the view.
+  const dist=Math.max(2.0, maxR/Math.sin(Math.min(vHalf,hHalf))*1.3);
   const dir = cam.position.lengthSq()>0 ? cam.position.clone().normalize()
                                         : new THREE.Vector3(1.1,0.8,1.1).normalize();
   cam.position.copy(dir.multiplyScalar(dist));
@@ -384,7 +419,9 @@ function slidersFromPoint(p){
 // Exact angle for display: up to 4 decimals, trailing zeros dropped.
 const fmtDeg = x => (+x.toFixed(4)).toString() + '°';
 
-const SPIKE_R = 1.17;  // sphere 0.42 + spike 0.7 + tip 0.05
+// Appearance multipliers (1 = default), set by the sliders under Appearance.
+const looks = { spin:1, stalk:1, tip:1 };
+const spikeR = () => 0.42 + 0.7 + 0.05*looks.tip;   // sphere + spike + tip ball
 
 function render(){
   panes.forEach(pn=>clear(pn.solid));
@@ -405,10 +442,10 @@ function render(){
   }
   document.getElementById('hullMsg').hidden = !(hull && !solidOk);
 
-  let shown = currentForm, maxR = SPIKE_R;
+  let shown = currentForm, maxR = spikeR();
   wanted.forEach((form, i)=>{
     const pn = panes[i];
-    let obj = null, r = SPIKE_R, drawn = form;
+    let obj = null, r = spikeR(), drawn = form;
     if(form==='vertex' && solidOk){
       obj = buildPolyhedron(hull.map(f=>f.idx.map(k=>rays[k])), color); r = 1;
     } else if(form==='face' && solidOk){
@@ -492,6 +529,7 @@ function selectSolid(s, g, form){
   updateActiveGroup();
   if(form && form!==currentForm) setForm(form); else render();
 }
+const twoLines = name => name.replace(' ', '<br>');
 function buildSolidList(el, list){
   list.forEach(s=>{
     s.dots = orbit(GROUPS[s.g], unit(s.p)).length;
@@ -499,8 +537,8 @@ function buildSolidList(el, list){
     row.className='solid';
     row.innerHTML = `<span class="tags">${groupsOf(s).map(g=>
         `<button class="tag" data-g="${g}" style="--tg:${hex(PALETTE[g])}" aria-label="${s.name}, ${g} group">${g}</button>`).join('')}</span>`
-      + `<button class="pick name">${s.name}${s.pivot ? '<span class="pv">pivot</span>' : ''}</button>`
-      + `<button class="pick dual">${s.dual}</button>`
+      + `<button class="pick name"><span>${twoLines(s.name)}${s.pivot ? '<span class="pv" title="Every dot sits on a rotation axis">★</span>' : ''}</span></button>`
+      + `<button class="pick dual"><span>${twoLines(s.dual)}</span></button>`
       + `<span class="dots">${s.dots}</span>`;
     const g = () => groupsOf(s).includes(currentGroup) ? currentGroup : s.g;
     s.tagBtns=[...row.querySelectorAll('.tag')];
@@ -548,14 +586,18 @@ function applySliders(){
   activePoint  = hit ? hit.q : null;
 }
 
+// Highlight every button naming a shape on screen: in Face view that's the dual, in
+// All 3 both. The shape can appear in two rows (the cube is the octahedron's dual).
+// The chip ring marks the row and group actually selected.
 function updateActivePreset(){
+  const sel = shownSolid();
+  const onScreen = !sel ? [] : currentForm==='face' ? [sel.dual]
+                 : currentForm==='all' ? [sel.name, sel.dual] : [sel.name];
+  document.getElementById('presets').style.setProperty('--hl', hex(PALETTE[currentGroup]));
   PRESETS.forEach(s=>{
-    const on = s===shownSolid();
-    s.row.classList.toggle('active', on);
-    s.row.style.setProperty('--g', hex(PALETTE[on ? currentGroup : s.g]));
-    s.tagBtns.forEach(t=>t.classList.toggle('current', on && t.dataset.g===currentGroup));
-    s.nameBtn.classList.toggle('shown', on && currentForm!=='face');
-    s.dualBtn.classList.toggle('shown', on && currentForm==='face');
+    s.tagBtns.forEach(t=>t.classList.toggle('current', s===sel && t.dataset.g===currentGroup));
+    s.nameBtn.classList.toggle('shown', onScreen.includes(s.name));
+    s.dualBtn.classList.toggle('shown', onScreen.includes(s.dual));
   });
 }
 
@@ -615,6 +657,13 @@ document.getElementById('randomize').onclick = ()=>{
   render();
 };
 
+['spin','stalk','tip'].forEach(k=>{
+  const el=document.getElementById(k), out=document.getElementById(k+'Val');
+  const show=()=>{ looks[k]=+el.value; out.textContent=looks[k].toFixed(1)+'×'; };
+  show();
+  el.addEventListener('input', ()=>{ show(); if(k!=='spin') requestRender(); });
+});
+
 let rotating=!matchMedia('(prefers-reduced-motion: reduce)').matches;
 const rotateEl=document.getElementById('rotate');
 rotateEl.checked=rotating;
@@ -624,7 +673,7 @@ const clock=new THREE.Clock();
 function loop(){
   requestAnimationFrame(loop);
   const dt=clock.getDelta();
-  if(rotating) panes.forEach(pn=>pn.solid.rotation.y += 0.3*dt);
+  if(rotating) panes.forEach(pn=>pn.solid.rotation.y += 0.3*looks.spin*dt);
   controls.update();
   const H=view.clientHeight, split=currentForm==='all';
   renderer.setScissorTest(split);
