@@ -19,6 +19,9 @@
   button:focus-visible,input:focus-visible{outline:2px solid var(--accent,#1f6feb);outline-offset:2px;}
   .sliderRow{display:flex;align-items:center;gap:10px;}
   .sliderRow input[type=range]{flex:1;accent-color:var(--accent,#1f6feb);}
+  .step{flex:none;width:28px;height:28px;padding:0;border-radius:7px;border:1px solid var(--line);background:var(--field);
+    color:var(--ink);font-size:16px;line-height:1;cursor:pointer;user-select:none;touch-action:manipulation;}
+  .step:hover{border-color:var(--accent,#1f6feb);}
   .check{display:flex;align-items:center;gap:7px;margin-top:12px;cursor:pointer;font-size:12px;color:var(--muted);}
   .check input{width:auto;}
   .readout{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;margin-top:16px;line-height:1.6;}
@@ -72,11 +75,15 @@
 
     <label for="theta">Generating point — polar angle <span id="thetaVal"></span></label>
     <div class="sliderRow">
+      <button class="step" data-for="theta" data-d="-1" aria-label="Polar angle down 1°">‹</button>
       <input type="range" id="theta" min="0" max="180" step="1" value="37">
+      <button class="step" data-for="theta" data-d="1" aria-label="Polar angle up 1°">›</button>
     </div>
     <label for="phi">Generating point — azimuth <span id="phiVal"></span></label>
     <div class="sliderRow">
+      <button class="step" data-for="phi" data-d="-1" aria-label="Azimuth down 1°">‹</button>
       <input type="range" id="phi" min="0" max="360" step="1" value="52">
+      <button class="step" data-for="phi" data-d="1" aria-label="Azimuth up 1°">›</button>
     </div>
 
     <div class="btnRow"><button class="ghost" id="randomize">Randomize point</button></div>
@@ -524,8 +531,7 @@ buildSolidList(document.getElementById('presetsArch'), ARCHIMEDEAN);
 // plus the orbits of its mirror image and its antipode (a mirror snub is still a snub;
 // under T, the flipped tetrahedron is still a tetrahedron). Verified offline that each
 // of these gives the same solid, and that targets of different solids are >= 5° apart,
-// so a 1° snap radius is never ambiguous.
-const SNAP_DEG = 1;
+// so no two targets round to the same whole-degree slider position.
 const MIRROR = { T:v=>[v[1],v[0],v[2]], O:v=>[v[0],v[1],-v[2]], I:v=>[-v[0],v[1],v[2]] };
 const SNAP_TARGETS = { T:[], O:[], I:[] };
 PRESETS.forEach(s=>{
@@ -538,18 +544,18 @@ PRESETS.forEach(s=>{
     });
   });
 });
-const SNAP_COS = Math.cos(SNAP_DEG*Math.PI/180);
-function nearestTarget(p){
-  let best=null, bestDot=SNAP_COS;
-  for(const t of SNAP_TARGETS[currentGroup]){
-    const d=dot(t.q,p);
-    if(d>=bestDot){ bestDot=d; best=t; }
-  }
-  return best;
-}
-// Read the (whole-degree) sliders, snapping to an exact solid if one is within 1°.
+// A whole-degree slider position, as a lookup key. At a pole the azimuth doesn't
+// matter (every azimuth is the same point), so it's left out.
+const sliderKey = (theta, phi) => (theta===0 || theta===180) ? `${theta}` : `${theta},${phi%360}`;
+const SNAP_KEYS = { T:new Map(), O:new Map(), I:new Map() };
+Object.entries(SNAP_TARGETS).forEach(([g, list])=>list.forEach(t=>{
+  const a = anglesOf(t.q);
+  SNAP_KEYS[g].set(sliderKey(Math.round(a.theta), Math.round(a.phi)), t);
+}));
+// Read the (whole-degree) sliders. If both sit on the whole degrees nearest a solid's
+// exact angles, use the exact solid instead: e.g. polar steps go 57, 58.2825, 59, 60.
 function applySliders(){
-  const hit = nearestTarget(pointFromSliders());
+  const hit = SNAP_KEYS[currentGroup].get(sliderKey(+thetaEl.value, +phiEl.value));
   activePreset = hit ? hit.preset : null;
   activePoint  = hit ? hit.q : null;
 }
@@ -586,6 +592,29 @@ function requestRender(){
     applySliders();
     requestRender();
   });
+});
+
+// ‹ › buttons: 1° per press, repeating while held. Azimuth wraps around; polar
+// angle stops at the poles.
+function stepSlider(el, d){
+  let v = +el.value + d;
+  v = el===phiEl ? (v+360)%360 : Math.min(180, Math.max(0, v));
+  el.value = v;
+  applySliders();
+  requestRender();
+}
+document.querySelectorAll('.step').forEach(b=>{
+  const el=document.getElementById(b.dataset.for), d=+b.dataset.d;
+  let delay=null, repeat=null;
+  const stop=()=>{ clearTimeout(delay); clearInterval(repeat); };
+  b.addEventListener('pointerdown', e=>{
+    if(e.button!==0) return;
+    e.preventDefault();   // no text selection or long-press menu while held
+    stepSlider(el, d);
+    delay=setTimeout(()=>{ repeat=setInterval(()=>stepSlider(el, d), 60); }, 400);
+  });
+  ['pointerup','pointerleave','pointercancel'].forEach(t=>b.addEventListener(t, stop));
+  b.addEventListener('click', e=>{ if(e.detail===0) stepSlider(el, d); });   // Enter / Space
 });
 
 document.getElementById('randomize').onclick = ()=>{
