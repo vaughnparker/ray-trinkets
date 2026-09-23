@@ -24,6 +24,8 @@
   .step:hover{border-color:var(--accent,#1f6feb);}
   .check{display:flex;align-items:center;gap:7px;margin-top:12px;cursor:pointer;font-size:12px;color:var(--muted);}
   .check input{width:auto;}
+  .check:has(input:disabled){opacity:.5;cursor:default;}
+  .note{font-size:11px;color:var(--muted);line-height:1.5;margin:8px 0 0;}
   #view canvas{display:block;}
   #paneBoxes{position:absolute;inset:0;pointer-events:none;}
   .paneBox{position:absolute;}
@@ -125,6 +127,16 @@
       <div class="solidList" id="presets"></div>
     </details>
 
+    <details class="triBox">
+      <summary class="listTitle"><span>Fundamental triangle</span></summary>
+      <label class="check"><input type="checkbox" id="triOn"> Show one triangle, and keep the point inside it</label>
+      <label class="check"><input type="checkbox" id="triMirror" disabled> Mirror image</label>
+      <label class="check"><input type="checkbox" id="triAll"> Show all the triangles, tiling the sphere</label>
+      <p class="note">Every spike ball comes from exactly one point in this triangle, or from
+      the mirror image of one. The mirror only changes points strictly inside the triangle.
+      The triangle is drawn in the spike-ball view.</p>
+    </details>
+
     <details class="looks">
       <summary class="listTitle"><span>Appearance</span></summary>
       <label for="spin">Spin speed <span id="spinVal"></span></label>
@@ -150,7 +162,8 @@ const hex = c => '#'+c.toString(16).padStart(6,'0');
 // data.js, but exact rather than rounded. The rest are the Archimedean solids that
 // are a single rotation orbit. Verified offline: orbit size, all edges equal, and
 // face counts match each solid. Snub points were solved numerically (5 equidistant
-// nearest neighbours). g is the solid's full rotation symmetry; `also` lists smaller
+// nearest neighbours); each snub is stored as the hand whose seed lies in the
+// fundamental triangle, so jumping to it never needs the mirror. g is the solid's full rotation symmetry; `also` lists smaller
 // groups that build the same solid as a single orbit (e.g. T makes the octahedron).
 const PRESETS = [
   {g:'T', name:'tetrahedron',            dual:'tetrahedron',                    p:[1,1,1], pivot:true},
@@ -161,14 +174,14 @@ const PRESETS = [
   {g:'O', name:'truncated cube',         dual:'triakis octahedron',             p:[0.281084637715,0.678598344546,0.678598344546]},
   {g:'O', name:'truncated octahedron',   dual:'tetrakis hexahedron',            p:[0,0.4472135955,0.894427191]},
   {g:'O', name:'rhombicuboctahedron',    dual:'deltoidal icositetrahedron',     p:[0.357406744337,0.357406744337,0.862856209461]},
-  {g:'O', name:'snub cube',              dual:'pentagonal icositetrahedron',    p:[-0.251358645685,0.462320627818,0.850340207407]},
+  {g:'O', name:'snub cube',              dual:'pentagonal icositetrahedron',    p:[-0.251358645685,0.462320627818,-0.850340207407]},
   {g:'I', name:'icosahedron',            dual:'dodecahedron',                   p:[0,1,PHI_GOLD], pivot:true, also:['T']},
   {g:'I', name:'dodecahedron',           dual:'icosahedron',                    p:[1,0,PHI_GOLD*PHI_GOLD], pivot:true},
   {g:'I', name:'icosidodecahedron',      dual:'rhombic triacontahedron',        p:[1,1/PHI_GOLD,PHI_GOLD], pivot:true},
   {g:'I', name:'truncated dodecahedron', dual:'triakis icosahedron',            p:[0.168381405887,0,0.985721919281]},
   {g:'I', name:'truncated icosahedron',  dual:'pentakis dodecahedron',          p:[0,0.201774106168,0.979432085486]},
   {g:'I', name:'rhombicosidodecahedron', dual:'deltoidal hexecontahedron',      p:[0.223918979795,0.223918979795,0.948536019862]},
-  {g:'I', name:'snub dodecahedron',      dual:'pentagonal hexecontahedron',     p:[-0.337843283248,-0.65648060127,0.674459143404]},
+  {g:'I', name:'snub dodecahedron',      dual:'pentagonal hexecontahedron',     p:[-0.337843283248,-0.65648060127,-0.674459143404]},
 ];
 const groupsOf = s => ['T','O','I'].filter(g => g===s.g || (s.also||[]).includes(g));
 // The named solid on screen, if any, and the symmetry to report for it: the solid's
@@ -229,6 +242,7 @@ const GROUPS = {
 };
 
 const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const POLE=[0,1,0];
 const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
 const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 const unit=v=>{ const n=Math.hypot(...v); return v.map(c=>c/n); };
@@ -288,6 +302,52 @@ function dualFaces(pts, hull){
   }).filter(poly=>poly.length>=3);
 }
 
+// ---- fundamental triangle ----
+// One mirror triangle of the group's full symmetry (rotations plus reflections), with
+// one corner on the +y pole so the azimuth slider gets a fixed range [a, b]. B and C
+// are the corners at azimuths a and b. Verified offline: corner axes (T: 2,3,3;
+// O: 4,2,3; I: 2,5,3), corner angles, and that every point on the sphere has exactly
+// one image in the triangle under rotations and reflections together.
+const TRI = {
+  T: {a:45, b:135, B:[1,1,1], C:[-1,1,1]},
+  O: {a:0,  b:45,  B:[1,1,0], C:[1,1,1]},
+  I: {a:0,  b:90,  B:[1,PHI_GOLD,0], C:[0,PHI_GOLD,1/PHI_GOLD]},
+};
+Object.entries(TRI).forEach(([g,t])=>{
+  t.g=g;
+  t.B=unit(t.B); t.C=unit(t.C);
+  const mid=unit([0,1,2].map(i=>POLE[i]+t.B[i]+t.C[i]));
+  // Inward unit normals of the sides pole-B, B-C, C-pole.
+  t.sides=[[POLE,t.B],[t.B,t.C],[t.C,POLE]].map(([u,v])=>{
+    const n=unit(cross(u,v)); return dot(n,mid)<0 ? n.map(c=>-c) : n;
+  });
+  // Reflection in side pole-B: the neighbouring triangle, holding the other hand.
+  const m=t.sides[0];
+  t.mirror=v=>{ const k=2*dot(v,m); return [v[0]-k*m[0], v[1]-k*m[1], v[2]-k*m[2]]; };
+  // The triangles tile the sphere along the group's mirror planes (T 6, O 9, I 15):
+  // the images of the three sides under every rotation and every rotation-after-mirror.
+  t.mirrorNormals=[];
+  GROUPS[t.g].forEach(M=>t.sides.forEach(n=>[apply(M,n), apply(M,t.mirror(n))].forEach(v=>{
+    if(!t.mirrorNormals.some(u=>Math.abs(dot(u,v)) > 1-1e-9)) t.mirrorNormals.push(v);
+  })));
+  t.thetaMax=0;
+  for(let f=t.a; f<=t.b; f++) t.thetaMax=Math.max(t.thetaMax, thetaLimit(t, f));
+});
+const inTri = (t, p) => t.sides.every(n=>dot(n,p) >= -1e-7);
+// Polar angle at which the meridian at azimuth phiDeg leaves the triangle (side B-C).
+function thetaLimit(t, phiDeg){
+  const n=t.sides[1], f=phiDeg*Math.PI/180, k=n[0]*Math.cos(f)+n[2]*Math.sin(f);
+  return Math.atan2(n[1], -k)*180/Math.PI;
+}
+// The copy of p's spike ball whose seed lies in the triangle: a rotated copy of p, or
+// failing that the mirror of one (then mirror:true, and the drawn seed is mirror(q)).
+function intoTriangle(p, g){
+  const t=TRI[g];
+  for(const q of orbit(GROUPS[g], p)) if(inTri(t,q)) return {q, mirror:false};
+  for(const q of orbit(GROUPS[g], t.mirror(p))) if(inTri(t,q)) return {q, mirror:true};
+  return {q:p, mirror:false};   // not reached: every point has an image in the triangle
+}
+
 // ---- three.js scene ----
 // Three panes, each with its own scene, all seen through one shared camera. Single
 // forms use pane 0 full-size; "All 3" draws spike / vertex / face side by side, so
@@ -333,7 +393,7 @@ function layoutPaneBoxes(){
 function clear(g){ while(g.children.length){ const c=g.children.pop();
   c.traverse(o=>{ if(o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); }); } }
 
-function buildSpike(rays, color){
+function buildSpike(rays, color, tri, tiling){
   const grp=new THREE.Group();
   const sphereMat=new THREE.MeshStandardMaterial({color:0x2a2d34, roughness:0.7, metalness:0.1});
   grp.add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), sphereMat));
@@ -354,6 +414,42 @@ function buildSpike(rays, color){
     const tip=new THREE.Mesh(tipGeo, i===0 ? seedTipMat : spikeMat);
     tip.position.copy(v.clone().multiplyScalar(0.42+len));
     grp.add(tip);
+  });
+  if(tiling) grp.add(buildTiling(tiling));
+  if(tri) grp.add(buildTriangle(...tri));
+  return grp;
+}
+// Every mirror great circle on the central sphere: the edges of all the triangles.
+function buildTiling(normals){
+  const grp=new THREE.Group(), z=new THREE.Vector3(0,0,1);
+  const mat=new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.45});
+  const ring=new THREE.TorusGeometry(0.424, 0.004, 6, 128);
+  normals.forEach(n=>{
+    const m=new THREE.Mesh(ring, mat);
+    m.quaternion.setFromUnitVectors(z, new THREE.Vector3(...n));
+    grp.add(m);
+  });
+  return grp;
+}
+// The triangle on the central sphere, just above its surface.
+function buildTriangle(A, B, C){
+  const R=0.425, N=24, grp=new THREE.Group();
+  const at=(i,j)=>{ const k=N-i-j; return unit([0,1,2].map(c=>i*A[c]+j*B[c]+k*C[c])).map(x=>x*R); };
+  const pos=[], index=[], id=(i,j)=>i*(N+1)-i*(i-1)/2+j;   // row i holds N+1-i points
+  for(let i=0;i<=N;i++) for(let j=0;j<=N-i;j++) pos.push(...at(i,j));
+  for(let i=0;i<N;i++) for(let j=0;j<N-i;j++){
+    index.push(id(i,j), id(i+1,j), id(i,j+1));
+    if(j<N-i-1) index.push(id(i+1,j), id(i+1,j+1), id(i,j+1));
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); g.setIndex(index);
+  grp.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial(
+    {color:0xffffff, transparent:true, opacity:0.22, side:THREE.DoubleSide, depthWrite:false})));
+  const edgeMat=new THREE.MeshBasicMaterial({color:0xffffff});
+  [[A,B],[B,C],[C,A]].forEach(([u,v])=>{
+    const pts=[]; for(let s=0;s<=32;s++){ const w=s/32;
+      pts.push(new THREE.Vector3(...unit([0,1,2].map(c=>(1-w)*u[c]+w*v[c])).map(x=>x*R*1.002))); }
+    grp.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 32, 0.006, 6), edgeMat));
   });
   return grp;
 }
@@ -396,6 +492,7 @@ let currentGroup='O', currentForm='spike';
 let activePreset=null;   // the named solid currently shown, if any
 let activePoint=null;    // its exact seed point (from a jump button or a snap); null = use sliders
 let lastFramedR=null;
+let triOn=false, triMirror=false, triAll=false;   // Fundamental triangle options
 
 const thetaEl=document.getElementById('theta'), phiEl=document.getElementById('phi');
 
@@ -425,8 +522,11 @@ const spikeR = () => 0.42 + 0.7 + 0.05*looks.tip;   // sphere + spike + tip ball
 
 function render(){
   panes.forEach(pn=>clear(pn.solid));
-  const p = activePoint || pointFromSliders();
+  const t = TRI[currentGroup], flip = triOn && triMirror;
+  let p = activePoint || pointFromSliders();
+  if(flip) p = t.mirror(p);
   const rays = orbit(GROUPS[currentGroup], p);
+  const tri = !triOn ? null : flip ? [POLE, t.B, t.C].map(t.mirror) : [POLE, t.B, t.C];
   const color = PALETTE[currentGroup];
   document.documentElement.style.setProperty('--accent', hex(color));
 
@@ -453,7 +553,7 @@ function render(){
       obj = buildPolyhedron(polys, color);
       r = Math.max(...polys.flat().map(v=>Math.hypot(...v)));
     } else if(form==='spike' || !split){
-      obj = buildSpike(rays, color); drawn = 'spike';   // single view falls back to spikes
+      obj = buildSpike(rays, color, tri, triAll ? t.mirrorNormals : null); drawn = 'spike';   // single view falls back to spikes
     } else {
       drawn = null;                                      // split view: leave the pane empty
     }
@@ -506,12 +606,48 @@ function updateReadout(rays, shown){
   caption.innerHTML = `<b>${name}${shownSym()} symmetry, ${rays.length} ${face ? 'faces' : 'dots'}</b>`;
 }
 
+// In triangle mode the azimuth runs over the triangle's range and the polar angle
+// stops at its far side (to the nearest whole degree, so its corners stay reachable).
+function sliderLimits(){
+  const t=TRI[currentGroup];
+  phiEl.min = triOn ? t.a : 0;  phiEl.max = triOn ? t.b : 360;
+  thetaEl.max = triOn ? Math.round(t.thetaMax) : 180;
+}
+function clampSliders(){
+  if(!triOn) return;
+  const t=TRI[currentGroup];
+  phiEl.value = Math.min(t.b, Math.max(t.a, +phiEl.value));
+  thetaEl.value = Math.min(+thetaEl.value, Math.round(thetaLimit(t, +phiEl.value)));
+}
+// Put the sliders on point p's copy in the triangle, keeping the spike ball the same.
+// With anyHand, skip the mirror: used for named solids, whose mirror image is the
+// same solid.
+function moveIntoTriangle(p, anyHand=false){
+  const {q, mirror} = intoTriangle(p, currentGroup);
+  setMirror(mirror && !anyHand);
+  sliderLimits(); slidersFromPoint(q); clampSliders(); applySliders();
+}
+const triOnEl=document.getElementById('triOn'), triMirrorEl=document.getElementById('triMirror');
+function setMirror(on){ triMirror=on; triMirrorEl.checked=on; }
+triOnEl.addEventListener('change', ()=>{
+  const t=TRI[currentGroup];
+  let p = activePoint || pointFromSliders();
+  if(triOn && triMirror) p = t.mirror(p);          // the seed as drawn
+  triOn = triOnEl.checked;
+  triMirrorEl.disabled = !triOn;
+  if(triOn) moveIntoTriangle(p);
+  else { setMirror(false); sliderLimits(); slidersFromPoint(p); applySliders(); }
+  render();
+});
+triMirrorEl.addEventListener('change', ()=>{ triMirror=triMirrorEl.checked; render(); });
+document.getElementById('triAll').addEventListener('change', e=>{ triAll=e.target.checked; render(); });
+
 // ---- controls ----
 const groupBtns=document.getElementById('groupButtons');
 ['T','O','I'].forEach(g=>{
   const b=document.createElement('button');
   b.textContent=g; b.dataset.g=g;
-  b.onclick=()=>{ currentGroup=g; applySliders(); updateActiveGroup(); render(); };
+  b.onclick=()=>{ currentGroup=g; sliderLimits(); clampSliders(); applySliders(); updateActiveGroup(); render(); };
   groupBtns.appendChild(b);
 });
 function updateActiveGroup(){
@@ -523,8 +659,10 @@ function updateActiveGroup(){
 // keep the current group when it can build the solid, else use the solid's own;
 // the left name leaves Face view, the right name switches to it.
 function selectSolid(s, g, form){
-  activePreset=s; activePoint=unit(s.p); currentGroup=g;
-  slidersFromPoint(activePoint);
+  currentGroup=g;
+  if(triOn) moveIntoTriangle(unit(s.p), true);
+  else { activePoint=unit(s.p); slidersFromPoint(activePoint); }
+  activePreset=s;
   panes.forEach(pn=>pn.solid.rotation.y=0);
   updateActiveGroup();
   if(form && form!==currentForm) setForm(form); else render();
@@ -622,17 +760,19 @@ function requestRender(){
 }
 [thetaEl, phiEl].forEach(el=>{
   el.addEventListener('input', ()=>{
+    clampSliders();
     applySliders();
     requestRender();
   });
 });
 
 // ‹ › buttons: 1° per press, repeating while held. Azimuth wraps around; polar
-// angle stops at the poles.
+// angle stops at the poles. In triangle mode both stop at the triangle's sides.
 function stepSlider(el, d){
   let v = +el.value + d;
-  v = el===phiEl ? (v+360)%360 : Math.min(180, Math.max(0, v));
+  v = el===phiEl && !triOn ? (v+360)%360 : Math.min(+el.max, Math.max(+el.min, v));
   el.value = v;
+  clampSliders();
   applySliders();
   requestRender();
 }
@@ -651,8 +791,15 @@ document.querySelectorAll('.step').forEach(b=>{
 });
 
 document.getElementById('randomize').onclick = ()=>{
-  thetaEl.value = Math.round(Math.acos(2*Math.random()-1)*180/Math.PI);
-  phiEl.value = Math.round(Math.random()*360);
+  // Uniform on the sphere; in triangle mode, retry until the point lands inside.
+  let theta, phi;
+  do {
+    theta = Math.acos(2*Math.random()-1);  phi = Math.random()*2*Math.PI;
+  } while(triOn && !inTri(TRI[currentGroup],
+            [Math.sin(theta)*Math.cos(phi), Math.cos(theta), Math.sin(theta)*Math.sin(phi)]));
+  thetaEl.value = Math.round(theta*180/Math.PI);
+  phiEl.value = Math.round(phi*180/Math.PI);
+  clampSliders();
   applySliders();
   render();
 };
