@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ray-trinkets — build a generic orbit</title>
+<style>
+  :root{--bg:#0b0e14;--panel:#151a24;--ink:#e6e9ef;--muted:#98a2b3;--line:#2a3342;--field:#0f141d;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+  #app{display:flex;height:100vh;overflow:hidden;}
+  #view{flex:1;position:relative;}
+  #panel{width:360px;background:var(--panel);padding:18px;overflow-y:auto;border-left:1px solid var(--line);}
+  h1{font-size:16px;margin:0 0 6px;}
+  label{font-size:12px;color:var(--muted);display:block;margin:14px 0 6px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;}
+  .row button{flex:1 1 auto;min-width:56px;padding:8px 6px;border-radius:8px;border:1px solid var(--line);background:var(--field);color:var(--ink);font-size:12px;cursor:pointer;}
+  .row button.active{background:var(--accent,#1f6feb);border-color:var(--accent,#1f6feb);color:#fff;font-weight:600;}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--accent,#1f6feb);outline-offset:2px;}
+  .sliderRow{display:flex;align-items:center;gap:10px;}
+  .sliderRow input[type=range]{flex:1;accent-color:var(--accent,#1f6feb);}
+  .check{display:flex;align-items:center;gap:7px;margin-top:12px;cursor:pointer;font-size:12px;color:var(--muted);}
+  .check input{width:auto;}
+  .readout{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;margin-top:16px;line-height:1.6;}
+  .big{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;margin-bottom:6px;}
+  .solidName{font-size:13px;font-weight:600;margin-bottom:4px;}
+  .badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:2px 7px;border-radius:5px;margin-left:6px;vertical-align:3px;}
+  .badge.axis{background:#3a2c14;color:#e8b23a;}
+  .badge.generic{background:#132a24;color:#4fd3ae;}
+  #view canvas{display:block;}
+  #paneBoxes{position:absolute;inset:0;pointer-events:none;}
+  .paneBox{position:absolute;}
+  .paneBox + .paneBox{border-left:1px solid var(--line);}
+  #paneBoxes.stacked .paneBox + .paneBox{border-left:none;border-top:1px solid var(--line);}
+  .paneLabel{position:absolute;top:12px;left:14px;right:14px;display:flex;flex-direction:column;gap:2px;
+    font-size:12px;color:var(--muted);text-shadow:0 1px 3px rgba(0,0,0,.8);}
+  .paneLabel b{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent,#e6e9ef);}
+  #caption{position:absolute;left:0;right:0;bottom:0;padding:14px 20px;background:linear-gradient(transparent,rgba(6,8,12,.9));font-size:13px;color:var(--muted);pointer-events:none;}
+  #hullMsg{font-size:11px;color:#e8833a;margin-top:6px;}
+  .btnRow{margin-top:14px;}
+  .ghost{width:100%;padding:9px 6px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:12px;cursor:pointer;}
+  .ghost:hover{border-color:var(--accent,#1f6feb);}
+
+  .solidList{display:flex;flex-direction:column;gap:4px;}
+  .solidList button{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:10px;width:100%;
+    padding:5px 10px 5px 5px;border-radius:7px;border:1px solid var(--line);background:var(--field);
+    color:var(--ink);font-size:12px;text-align:left;cursor:pointer;}
+  .solidList button:hover{border-color:var(--g);}
+  .solidList button.active{background:var(--g);border-color:var(--g);color:#0b0e14;font-weight:700;}
+  .solidList .tag{height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:800;color:#0b0e14;background:var(--g);}
+  .solidList button.active .tag{background:#0b0e14;color:var(--g);}
+  .solidList .dots{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;}
+  .solidList button.active .dots{color:#0b0e14;}
+  .solidList .pv{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-left:6px;opacity:.7;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="view">
+    <div id="paneBoxes" hidden>
+      <div class="paneBox"><div class="paneLabel"></div></div>
+      <div class="paneBox"><div class="paneLabel"></div></div>
+      <div class="paneBox"><div class="paneLabel"></div></div>
+    </div>
+    <div id="caption"></div>
+  </div>
+  <div id="panel">
+    <h1>ray-trinkets — build a generic orbit</h1>
+    <label>Rotation group</label>
+    <div class="row" id="groupButtons"></div>
+
+    <label for="theta">Generating point — polar angle <span id="thetaVal"></span></label>
+    <div class="sliderRow">
+      <input type="range" id="theta" min="0" max="180" step="1" value="37">
+    </div>
+    <label for="phi">Generating point — azimuth <span id="phiVal"></span></label>
+    <div class="sliderRow">
+      <input type="range" id="phi" min="0" max="360" step="1" value="52">
+    </div>
+
+    <div class="btnRow"><button class="ghost" id="randomize">Randomize point</button></div>
+
+    <label style="margin-top:18px;">Jump to one of the 7 (on an axis)</label>
+    <div class="solidList" id="presetsSeven"></div>
+
+    <label style="margin-top:18px;">Jump to an Archimedean solid</label>
+    <div class="solidList" id="presetsArch"></div>
+    <label style="margin-top:18px;">Show as</label>
+    <div class="row" id="formButtons">
+      <button data-form="spike" class="active">Spike-ball</button>
+      <button data-form="vertex">Vertex (hull)</button>
+      <button data-form="face">Face (dual)</button>
+      <button data-form="all">All 3</button>
+    </div>
+    <div id="hullMsg" hidden>These dots are too few, or too flat, to make a solid.</div>
+
+    <label class="check"><input type="checkbox" id="rotate" checked> slowly rotate</label>
+
+    <div class="readout">
+      <div class="big" id="big"></div>
+      <div class="solidName" id="solidName" hidden></div>
+      <div id="detail"></div>
+    </div>
+  </div>
+</div>
+
+<script src="three.min.js"></script>
+<script src="OrbitControls.js"></script>
+<script>
+const PHI_GOLD = (1 + Math.sqrt(5)) / 2;
+const TOL = 1e-6;
+const PALETTE = { T: 0xe8833a, O: 0x3b7dd8, I: 0x2ca58d };
+const ORDER = { T: 12, O: 24, I: 60 };
+const hex = c => '#'+c.toString(16).padStart(6,'0');
+
+// The 7 pivot sets: seed points sit exactly on a face, edge or corner axis.
+// Same frame as script.py / data.js, but exact rather than rounded.
+const SEVEN = [
+  {g:'T', name:'tetrahedron',       dual:'tetrahedron',             p:[1,1,1]},
+  {g:'O', name:'octahedron',        dual:'cube',                    p:[0,0,1]},
+  {g:'O', name:'cube',              dual:'octahedron',              p:[1,1,1]},
+  {g:'O', name:'cuboctahedron',     dual:'rhombic dodecahedron',    p:[0,1,1]},
+  {g:'I', name:'icosahedron',       dual:'dodecahedron',            p:[0,1,PHI_GOLD]},
+  {g:'I', name:'dodecahedron',      dual:'icosahedron',             p:[1,0,PHI_GOLD*PHI_GOLD]},
+  {g:'I', name:'icosidodecahedron', dual:'rhombic triacontahedron', p:[1,1/PHI_GOLD,PHI_GOLD]},
+];
+
+// Seed points for the Archimedean solids that are a single rotation orbit.
+// Verified offline: orbit size, all edges equal, and face counts match each solid.
+// Snub points were solved numerically (5 equidistant nearest neighbours).
+const ARCHIMEDEAN = [
+  {g:'T', name:'truncated tetrahedron',  dual:'triakis tetrahedron',            p:[0.904534033733,0.301511344578,0.301511344578]},
+  {g:'O', name:'cuboctahedron',          dual:'rhombic dodecahedron',           p:[0.707106781187,0.707106781187,0], pivot:true},
+  {g:'O', name:'truncated cube',         dual:'triakis octahedron',             p:[0.281084637715,0.678598344546,0.678598344546]},
+  {g:'O', name:'truncated octahedron',   dual:'tetrakis hexahedron',            p:[0,0.4472135955,0.894427191]},
+  {g:'O', name:'rhombicuboctahedron',    dual:'deltoidal icositetrahedron',     p:[0.357406744337,0.357406744337,0.862856209461]},
+  {g:'O', name:'snub cube',              dual:'pentagonal icositetrahedron',    p:[-0.251358645685,0.462320627818,0.850340207407]},
+  {g:'I', name:'icosidodecahedron',      dual:'rhombic triacontahedron',        p:[0,0,1], pivot:true},
+  {g:'I', name:'truncated dodecahedron', dual:'triakis icosahedron',            p:[0.168381405887,0,0.985721919281]},
+  {g:'I', name:'truncated icosahedron',  dual:'pentakis dodecahedron',          p:[0,0.201774106168,0.979432085486]},
+  {g:'I', name:'rhombicosidodecahedron', dual:'deltoidal hexecontahedron',      p:[0.223918979795,0.223918979795,0.948536019862]},
+  {g:'I', name:'snub dodecahedron',      dual:'pentagonal hexecontahedron',     p:[-0.337843283248,-0.65648060127,0.674459143404]},
+];
+
+function rot(axis, angle){
+  let [x,y,z] = axis; const n = Math.hypot(x,y,z); x/=n; y/=n; z/=n;
+  const c = Math.cos(angle), s = Math.sin(angle), C = 1-c;
+  return [
+    [x*x*C+c,   x*y*C-z*s, x*z*C+y*s],
+    [y*x*C+z*s, y*y*C+c,   y*z*C-x*s],
+    [z*x*C-y*s, z*y*C+x*s, z*z*C+c],
+  ];
+}
+function matMul(A,B){
+  const R=[[0,0,0],[0,0,0],[0,0,0]];
+  for(let i=0;i<3;i++) for(let j=0;j<3;j++) for(let k=0;k<3;k++) R[i][j]+=A[i][k]*B[k][j];
+  return R;
+}
+function matEq(A,B){
+  for(let i=0;i<3;i++) for(let j=0;j<3;j++) if(Math.abs(A[i][j]-B[i][j])>TOL) return false;
+  return true;
+}
+function closeGroup(gens){
+  const I3=[[1,0,0],[0,1,0],[0,0,1]];
+  let G=[I3], changed=true;
+  while(changed){
+    changed=false;
+    for(const A of G.slice()){
+      for(const B of gens){
+        const M=matMul(A,B);
+        if(!G.some(H=>matEq(M,H))){ G.push(M); changed=true; }
+      }
+    }
+  }
+  return G;
+}
+function apply(M, v){
+  return [M[0][0]*v[0]+M[0][1]*v[1]+M[0][2]*v[2],
+          M[1][0]*v[0]+M[1][1]*v[1]+M[1][2]*v[2],
+          M[2][0]*v[0]+M[2][1]*v[1]+M[2][2]*v[2]];
+}
+function orbit(G, p){
+  const out=[];
+  for(const M of G){
+    const q=apply(M,p);
+    if(!out.some(r=>Math.hypot(q[0]-r[0],q[1]-r[1],q[2]-r[2])<1e-5)) out.push(q);
+  }
+  return out;
+}
+
+const GROUPS = {
+  T: closeGroup([rot([1,0,0],Math.PI),        rot([1,1,1],2*Math.PI/3)]),
+  O: closeGroup([rot([0,0,1],Math.PI/2),       rot([1,1,1],2*Math.PI/3)]),
+  I: closeGroup([rot([0,1,PHI_GOLD],2*Math.PI/5), rot([0,-1,PHI_GOLD],2*Math.PI/5)]),
+};
+
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const unit=v=>{ const n=Math.hypot(...v); return v.map(c=>c/n); };
+
+// Wind point indices into a ring around `axis`.
+function wind(axis, pts){
+  const center = pts.reduce((a,p)=>[a[0]+p[0],a[1]+p[1],a[2]+p[2]],[0,0,0]).map(c=>c/pts.length);
+  let u = cross(axis, [1,0,0]);
+  if(Math.hypot(...u) < 0.1) u = cross(axis, [0,1,0]);
+  u = unit(u);
+  const w = cross(axis, u);
+  const ang = p => { const q=sub(p,center); return Math.atan2(dot(q,w), dot(q,u)); };
+  return pts.map((p,i)=>[ang(p),i]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+}
+
+// Brute-force convex hull. Every dot sits on a sphere (a strictly convex surface), so
+// every dot is a hull vertex and we only need the facets. Coplanar dots merge into one
+// face. O(n^4) worst case, fine for n <= 60 since it only reruns when the point moves.
+// Returns [{idx: wound vertex indices, normal: outward unit normal, d: plane offset}].
+function convexHullFaces(pts, tol=1e-4){
+  const n = pts.length, faces = [], seen = new Set();
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++) for(let k=j+1;k<n;k++){
+    let normal = cross(sub(pts[j],pts[i]), sub(pts[k],pts[i]));
+    const nn = Math.hypot(...normal);
+    if(nn < tol) continue;
+    normal = normal.map(c=>c/nn);
+    let pos=0, neg=0;
+    for(let m=0;m<n && !(pos && neg);m++){   // stop as soon as dots show up on both sides
+      const d = dot(normal, sub(pts[m], pts[i]));
+      if(d > tol) pos++; else if(d < -tol) neg++;
+    }
+    if(pos>0 && neg>0) continue;           // not a supporting plane
+    if(pos>0) normal = normal.map(c=>-c);  // orient outward (all other dots behind it)
+    const onFace=[];
+    for(let m=0;m<n;m++) if(Math.abs(dot(normal, sub(pts[m], pts[i]))) <= tol) onFace.push(m);
+    const key = onFace.join(',');
+    if(seen.has(key)) continue;
+    seen.add(key);
+    const order = wind(normal, onFace.map(m=>pts[m]));
+    const idx = order.map(o=>onFace[o]);
+    const d = onFace.reduce((a,m)=>a+dot(normal, pts[m]),0)/onFace.length;
+    faces.push({idx, normal, d});
+  }
+  return faces;
+}
+
+// Polar dual: tangent plane x·r = 1 at each dot r. Each hull face (normal n, offset d)
+// becomes the dual vertex n/d; each dot becomes a face ringed by the dual vertices of
+// the hull faces that touch it.
+function dualFaces(pts, hull){
+  const dualVerts = hull.map(f=>f.normal.map(c=>c/f.d));
+  const touching = pts.map(()=>[]);
+  hull.forEach((f,fi)=>f.idx.forEach(v=>touching[v].push(fi)));
+  return pts.map((r,i)=>{
+    const ring = touching[i].map(fi=>dualVerts[fi]);
+    return wind(r, ring).map(o=>ring[o]);
+  }).filter(poly=>poly.length>=3);
+}
+
+// ---- three.js scene ----
+// Three panes, each with its own scene, all seen through one shared camera. Single
+// forms use pane 0 full-size; "All 3" draws spike / vertex / face side by side, so
+// dragging anywhere turns all three together.
+const view=document.getElementById('view'), caption=document.getElementById('caption');
+const paneBoxes=document.getElementById('paneBoxes');
+const cam=new THREE.PerspectiveCamera(45, view.clientWidth/view.clientHeight, 0.01, 100);
+const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(devicePixelRatio);
+renderer.setSize(view.clientWidth, view.clientHeight); view.prepend(renderer.domElement);
+const controls=new THREE.OrbitControls(cam, renderer.domElement); controls.enableDamping=true;
+
+function makePane(){
+  const scene=new THREE.Scene(); scene.background=new THREE.Color(0x0b0e14);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const key=new THREE.DirectionalLight(0xffffff, 0.85); key.position.set(0.5,0.85,0.6); scene.add(key);
+  const fill=new THREE.DirectionalLight(0xffffff, 0.25); fill.position.set(-0.6,-0.3,-0.5); scene.add(fill);
+  const solid=new THREE.Group(); scene.add(solid);
+  return {scene, solid};
+}
+const panes=[makePane(), makePane(), makePane()];
+const SPLIT_FORMS=['spike','vertex','face'];
+const FORM_LABEL={spike:'Spike-ball', vertex:'Vertex hull', face:'Face dual'};
+
+// Pane rectangles in CSS pixels, top-left origin. Side by side when the view is
+// wide, stacked when it's tall.
+function paneRects(){
+  const W=view.clientWidth, H=view.clientHeight;
+  if(currentForm!=='all') return [{x:0,y:0,w:W,h:H}];
+  if(W >= H) { const w=W/3; return [0,1,2].map(i=>({x:i*w, y:0, w, h:H})); }
+  const h=H/3; return [0,1,2].map(i=>({x:0, y:i*h, w:W, h}));
+}
+function layoutPaneBoxes(){
+  const rects=paneRects(), split=currentForm==='all';
+  paneBoxes.hidden=!split;
+  paneBoxes.classList.toggle('stacked', split && rects[0].w===view.clientWidth);
+  if(!split) return;
+  [...paneBoxes.children].forEach((box,i)=>{
+    const r=rects[i];
+    Object.assign(box.style, {left:r.x+'px', top:r.y+'px', width:r.w+'px', height:r.h+'px'});
+  });
+}
+
+function clear(g){ while(g.children.length){ const c=g.children.pop();
+  c.traverse(o=>{ if(o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); }); } }
+
+function buildSpike(rays, color){
+  const grp=new THREE.Group();
+  const sphereMat=new THREE.MeshStandardMaterial({color:0x2a2d34, roughness:0.7, metalness:0.1});
+  grp.add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), sphereMat));
+  const spikeMat=new THREE.MeshStandardMaterial({color, roughness:0.5, metalness:0.15, flatShading:true});
+  // The seed spike (the one the sliders move) is rays[0]: orbit() applies the identity
+  // rotation first. Only its tip is marked, in yellow.
+  const seedTipMat=new THREE.MeshStandardMaterial({color:0xffd23f, roughness:0.5, metalness:0.15, flatShading:true});
+  const up=new THREE.Vector3(0,1,0), len=0.7;
+  rays.forEach((r,i)=>{
+    const v=new THREE.Vector3(...r).normalize();
+    const cyl=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,len,14), spikeMat);
+    cyl.quaternion.setFromUnitVectors(up, v);
+    cyl.position.copy(v.clone().multiplyScalar(0.42+len/2));
+    grp.add(cyl);
+    const tip=new THREE.Mesh(new THREE.SphereGeometry(0.05,14,12), i===0 ? seedTipMat : spikeMat);
+    tip.position.copy(v.clone().multiplyScalar(0.42+len));
+    grp.add(tip);
+  });
+  return grp;
+}
+function faceGeom(poly){
+  const g=new THREE.BufferGeometry(), pos=[];
+  for(let i=1;i<poly.length-1;i++) pos.push(...poly[0], ...poly[i], ...poly[i+1]);
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  g.computeVertexNormals(); return g;
+}
+function edgeLoop(poly, colorHex){
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(poly.flat(),3));
+  return new THREE.LineLoop(g, new THREE.LineBasicMaterial({color:colorHex}));
+}
+function buildPolyhedron(polys, color){
+  const grp=new THREE.Group();
+  polys.forEach(poly=>{
+    grp.add(new THREE.Mesh(faceGeom(poly), new THREE.MeshStandardMaterial(
+      {color, roughness:0.6, metalness:0.0, side:THREE.DoubleSide, flatShading:true})));
+    grp.add(edgeLoop(poly, 0xffffff));
+  });
+  return grp;
+}
+
+// Move the camera in or out so a radius-maxR object fits the (first) pane, keeping the
+// current viewing direction. Narrow panes are limited by the horizontal field of view.
+function frame(maxR){
+  const r=paneRects()[0], aspect=r.w/r.h;
+  const vHalf=Math.PI/8, hHalf=Math.atan(Math.tan(vHalf)*aspect);
+  const dist=Math.max(2.0, maxR/Math.sin(Math.min(vHalf,hHalf))*1.08);
+  const dir = cam.position.lengthSq()>0 ? cam.position.clone().normalize()
+                                        : new THREE.Vector3(1.1,0.8,1.1).normalize();
+  cam.position.copy(dir.multiplyScalar(dist));
+  cam.lookAt(0,0,0); controls.target.set(0,0,0); controls.update();
+}
+
+// ---- state ----
+let currentGroup='O', currentForm='spike';
+let activePreset=null;   // the named solid currently shown, if any
+let activePoint=null;    // its exact seed point (from a jump button or a snap); null = use sliders
+let lastFramedR=null;
+
+const thetaEl=document.getElementById('theta'), phiEl=document.getElementById('phi');
+
+function pointFromSliders(){
+  const theta = +thetaEl.value * Math.PI/180;
+  const phi   = +phiEl.value * Math.PI/180;
+  return [Math.sin(theta)*Math.cos(phi), Math.cos(theta), Math.sin(theta)*Math.sin(phi)];
+}
+function anglesOf(p){
+  const theta = Math.acos(Math.max(-1, Math.min(1, p[1]))) * 180/Math.PI;
+  let phi = Math.atan2(p[2], p[0]) * 180/Math.PI;
+  if(phi < 0) phi += 360;
+  if(theta < 1e-9 || theta > 180-1e-9) phi = 0;   // azimuth is meaningless at a pole
+  return {theta, phi};
+}
+function slidersFromPoint(p){
+  const {theta, phi} = anglesOf(p);
+  thetaEl.value = Math.round(theta);
+  phiEl.value = Math.round(phi);
+}
+// Exact angle for display: up to 4 decimals, trailing zeros dropped.
+const fmtDeg = x => (+x.toFixed(4)).toString() + '°';
+
+const SPIKE_R = 1.17;  // sphere 0.42 + spike 0.7 + tip 0.05
+
+function render(){
+  panes.forEach(pn=>clear(pn.solid));
+  const p = activePoint || pointFromSliders();
+  const rays = orbit(GROUPS[currentGroup], p);
+  const color = PALETTE[currentGroup];
+  const isAxis = rays.length < ORDER[currentGroup];
+  document.documentElement.style.setProperty('--accent', hex(color));
+
+  const split = currentForm==='all';
+  const wanted = split ? SPLIT_FORMS : [currentForm];
+
+  // The hull is shared by the vertex and face forms, so compute it at most once.
+  let hull = null, solidOk = false;
+  if(wanted.some(f=>f!=='spike')){
+    hull = rays.length >= 4 ? convexHullFaces(rays) : [];
+    // A real solid needs >= 4 faces with the centre strictly inside every one.
+    solidOk = hull.length >= 4 && hull.every(f=>f.d > 1e-3);
+  }
+  document.getElementById('hullMsg').hidden = !(hull && !solidOk);
+
+  let shown = currentForm, maxR = SPIKE_R;
+  wanted.forEach((form, i)=>{
+    const pn = panes[i];
+    let obj = null, r = SPIKE_R, drawn = form;
+    if(form==='vertex' && solidOk){
+      obj = buildPolyhedron(hull.map(f=>f.idx.map(k=>rays[k])), color); r = 1;
+    } else if(form==='face' && solidOk){
+      const polys = dualFaces(rays, hull);
+      obj = buildPolyhedron(polys, color);
+      r = Math.max(...polys.flat().map(v=>Math.hypot(...v)));
+    } else if(form==='spike' || !split){
+      obj = buildSpike(rays, color); drawn = 'spike';   // single view falls back to spikes
+    } else {
+      drawn = null;                                      // split view: leave the pane empty
+    }
+    if(obj){
+      // In split view every pane is scaled to the same radius so one camera fits all.
+      if(split) obj.scale.setScalar(1/r);
+      pn.solid.add(obj);
+    }
+    if(!split){ shown = drawn; maxR = r; }
+    if(split) paneBoxes.children[i].querySelector('.paneLabel').innerHTML =
+      paneLabel(form, drawn!==null, rays.length);
+  });
+
+  if(split) maxR = 1;
+  // Only reframe when the object's size changes noticeably, so dragging a slider
+  // doesn't make the camera jump around.
+  if(lastFramedR===null || Math.abs(maxR-lastFramedR)/lastFramedR > 0.15){
+    frame(maxR); lastFramedR = maxR;
+  }
+  updateReadout(rays, isAxis, shown);
+  updateActivePreset();
+}
+
+function paneLabel(form, ok, n){
+  const named = activePreset && activePreset.g===currentGroup ? activePreset : null;
+  let what;
+  if(!ok) what = 'no solid: too few dots';
+  else if(form==='spike') what = `${n} dots`;
+  else if(form==='vertex') what = named ? named.name : `${n} corners`;
+  else what = named ? named.dual : `${n} faces`;
+  return `<b>${FORM_LABEL[form]}</b><span>${what}</span>`;
+}
+
+function updateReadout(rays, isAxis, shown){
+  const groupName = {T:'tetrahedral', O:'octahedral', I:'icosahedral'}[currentGroup];
+  const badge = isAxis
+    ? `<span class="badge axis">on axis</span>`
+    : `<span class="badge generic">generic</span>`;
+  document.getElementById('big').innerHTML = `${currentGroup} · ${rays.length}${badge}`;
+
+  const nameEl = document.getElementById('solidName');
+  const named = activePreset && activePreset.g===currentGroup ? activePreset : null;
+  if(named){
+    nameEl.hidden = false;
+    nameEl.textContent = shown==='face' ? `${named.dual} (dual of the ${named.name})`
+                       : shown==='all'  ? `${named.name} · dual: ${named.dual}`
+                       : named.name;
+  } else {
+    nameEl.hidden = true;
+  }
+
+  document.getElementById('detail').innerHTML = isAxis
+    ? `Landed on a symmetry axis, so this is one of the 7 pivot sets. The orbit drops from ${ORDER[currentGroup]} to ${rays.length} dots under ${groupName} symmetry.`
+    : `${rays.length} dots: a full generic orbit under ${groupName} symmetry, the most this group allows. No dot is a pivot.`;
+  if(activePoint){
+    const a = anglesOf(activePoint);
+    document.getElementById('thetaVal').textContent = `${fmtDeg(a.theta)} · exact`;
+    document.getElementById('phiVal').textContent = `${fmtDeg(a.phi)} · exact`;
+  } else {
+    document.getElementById('thetaVal').textContent = thetaEl.value + '°';
+    document.getElementById('phiVal').textContent = phiEl.value + '°';
+  }
+  caption.hidden = shown==='all';   // each pane carries its own label instead
+  const formLabel = {spike:'spike-ball', vertex:'vertex hull', face:'face polyhedron (dual)'}[shown];
+  const title = named ? (shown==='face' ? named.dual : named.name) : `${currentGroup} · ${rays.length}`;
+  caption.innerHTML = `<b>${title}</b> ${isAxis?'(axis-locked)':'(generic)'}, shown as ${formLabel}`;
+}
+
+// ---- controls ----
+const groupBtns=document.getElementById('groupButtons');
+['T','O','I'].forEach(g=>{
+  const b=document.createElement('button');
+  b.textContent=g; b.dataset.g=g;
+  b.onclick=()=>{ currentGroup=g; applySliders(); updateActiveGroup(); render(); };
+  groupBtns.appendChild(b);
+});
+function updateActiveGroup(){
+  groupBtns.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.g===currentGroup));
+}
+
+// One row per solid: group tag, name, dot count.
+const PRESETS = [...SEVEN, ...ARCHIMEDEAN];
+function buildSolidList(el, list){
+  list.forEach(s=>{
+    s.dots = orbit(GROUPS[s.g], unit(s.p)).length;
+    const b=document.createElement('button');
+    b.style.setProperty('--g', hex(PALETTE[s.g]));
+    b.innerHTML = `<span class="tag">${s.g}</span>`
+      + `<span>${s.name}${s.pivot ? '<span class="pv">pivot</span>' : ''}</span>`
+      + `<span class="dots">${s.dots} dots</span>`;
+    b.onclick=()=>{
+      activePreset=s; activePoint=unit(s.p); currentGroup=s.g;
+      slidersFromPoint(activePoint);
+      panes.forEach(pn=>pn.solid.rotation.y=0);
+      updateActiveGroup(); render();
+    };
+    s.button=b;
+    el.appendChild(b);
+  });
+}
+buildSolidList(document.getElementById('presetsSeven'), SEVEN);
+buildSolidList(document.getElementById('presetsArch'), ARCHIMEDEAN);
+
+// ---- snapping ----
+// Every placement of the seed that produces one of the 16 solids: its whole orbit,
+// plus the orbits of its mirror image and its antipode (a mirror snub is still a snub;
+// under T, the flipped tetrahedron is still a tetrahedron). Verified offline that each
+// of these gives the same solid, and that targets of different solids are >= 5° apart,
+// so a 1° snap radius is never ambiguous.
+const SNAP_DEG = 1;
+const MIRROR = { T:v=>[v[1],v[0],v[2]], O:v=>[v[0],v[1],-v[2]], I:v=>[-v[0],v[1],v[2]] };
+const SNAP_TARGETS = { T:[], O:[], I:[] };
+PRESETS.forEach(s=>{
+  const list = SNAP_TARGETS[s.g];
+  if(list.some(t=>t.preset.name===s.name)) return;   // cuboctahedron etc. listed twice
+  const p = unit(s.p), m = MIRROR[s.g](p), neg = v=>v.map(c=>-c);
+  [p, neg(p), m, neg(m)].forEach(seed=>{
+    orbit(GROUPS[s.g], seed).forEach(q=>{
+      if(!list.some(t=>dot(t.q,q) > 1-1e-9)) list.push({preset:s, q});
+    });
+  });
+});
+const SNAP_COS = Math.cos(SNAP_DEG*Math.PI/180);
+function nearestTarget(p){
+  let best=null, bestDot=SNAP_COS;
+  for(const t of SNAP_TARGETS[currentGroup]){
+    const d=dot(t.q,p);
+    if(d>=bestDot){ bestDot=d; best=t; }
+  }
+  return best;
+}
+// Read the (whole-degree) sliders, snapping to an exact solid if one is within 1°.
+function applySliders(){
+  const hit = nearestTarget(pointFromSliders());
+  activePreset = hit ? hit.preset : null;
+  activePoint  = hit ? hit.q : null;
+}
+
+// The cuboctahedron and icosidodecahedron appear in both lists; light up both rows.
+function updateActivePreset(){
+  PRESETS.forEach(s=>s.button.classList.toggle('active',
+    !!activePreset && s.name===activePreset.name && s.g===currentGroup));
+}
+
+const formBtns=document.getElementById('formButtons');
+formBtns.querySelectorAll('button').forEach(b=>{
+  b.onclick=()=>{
+    currentForm=b.dataset.form;
+    formBtns.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    layoutPaneBoxes();
+    lastFramedR=null;   // pane shape changed, so refit
+    render();
+  };
+});
+
+// Render at most once per animation frame, always with the latest slider value. (A
+// debounce would never fire while an arrow key is held, because key repeat keeps
+// resetting it.)
+let renderQueued=false;
+function requestRender(){
+  if(renderQueued) return;
+  renderQueued=true;
+  requestAnimationFrame(()=>{ renderQueued=false; render(); });
+}
+[thetaEl, phiEl].forEach(el=>{
+  el.addEventListener('input', ()=>{
+    applySliders();
+    requestRender();
+  });
+});
+
+document.getElementById('randomize').onclick = ()=>{
+  thetaEl.value = Math.round(Math.acos(2*Math.random()-1)*180/Math.PI);
+  phiEl.value = Math.round(Math.random()*360);
+  applySliders();
+  render();
+};
+
+let rotating=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+const rotateEl=document.getElementById('rotate');
+rotateEl.checked=rotating;
+rotateEl.addEventListener('change', e=>rotating=e.target.checked);
+
+const clock=new THREE.Clock();
+function loop(){
+  requestAnimationFrame(loop);
+  const dt=clock.getDelta();
+  if(rotating) panes.forEach(pn=>pn.solid.rotation.y += 0.3*dt);
+  controls.update();
+  const H=view.clientHeight, split=currentForm==='all';
+  renderer.setScissorTest(split);
+  paneRects().forEach((r,i)=>{
+    const y=H-r.y-r.h;   // WebGL viewports start at the bottom
+    renderer.setViewport(r.x, y, r.w, r.h);
+    renderer.setScissor(r.x, y, r.w, r.h);
+    cam.aspect=r.w/r.h; cam.updateProjectionMatrix();
+    renderer.render(panes[i].scene, cam);
+  });
+}
+loop();
+
+updateActiveGroup();
+applySliders();
+render();
+
+window.addEventListener('resize', ()=>{
+  renderer.setSize(view.clientWidth, view.clientHeight);
+  layoutPaneBoxes();
+  lastFramedR=null; render();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ray-trinkets — the 7 elementary ray-sets</title>
+<style>
+  :root{--bg:#0b0e14;--panel:#151a24;--ink:#e6e9ef;--muted:#98a2b3;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+  #app{display:flex;height:100vh;overflow:hidden;}
+  #view{flex:1;position:relative;}
+  #panel{width:320px;background:var(--panel);padding:18px;overflow-y:auto;border-left:1px solid #222a37;}
+  h1{font-size:16px;margin:0 0 6px;}
+  .sub{font-size:12px;color:var(--muted);margin:0 0 14px;line-height:1.5;}
+  label{font-size:12px;color:var(--muted);display:block;margin:14px 0 6px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;}
+  .row button{flex:1 1 auto;min-width:64px;padding:8px 6px;border-radius:8px;border:1px solid #2a3342;background:#0f141d;color:var(--ink);font-size:12px;cursor:pointer;}
+  .row button.active{background:#1f6feb;border-color:#1f6feb;color:#fff;font-weight:600;}
+  .check{display:flex;align-items:center;gap:7px;margin-top:12px;cursor:pointer;font-size:12px;color:var(--muted);}
+  .check input{width:auto;}
+  .readout{background:#0f141d;border:1px solid #2a3342;border-radius:10px;padding:12px;font-size:13px;margin-top:16px;line-height:1.6;}
+  .big{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;margin-bottom:6px;}
+  #caption{position:absolute;left:0;right:0;bottom:0;padding:14px 20px;background:linear-gradient(transparent,rgba(6,8,12,.9));font-size:13px;color:var(--muted);pointer-events:none;}
+  .hint{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.5;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="view"><div id="caption"></div></div>
+  <div id="panel">
+    <h1>ray-trinkets — the 7</h1>
+    <p class="sub">Every elementary ray-set: a single orbit of dots under a polyhedral
+    rotation group (T, O, or I). Pick one, then pick how the dots become a physical
+    object.</p>
+
+    <label>Ray-set</label>
+    <div class="row" id="shapeButtons"></div>
+
+    <label>Show as</label>
+    <div class="row" id="formButtons">
+      <button data-form="spike" class="active">Spike-ball</button>
+      <button data-form="vertex">Vertex (hull)</button>
+      <button data-form="face">Face (dual)</button>
+    </div>
+
+    <label class="check"><input type="checkbox" id="rotate" checked> slowly rotate</label>
+
+    <div class="readout">
+      <div class="big" id="big"></div>
+      <div id="detail"></div>
+    </div>
+
+    <p class="hint">Drag to orbit, scroll to zoom. <b>Spike-ball</b> is the dots as
+    literal rays; <b>vertex</b> is their convex hull (dots become corners);
+    <b>face</b> slides a tangent plane in at each dot until neighbors meet
+    (dots become faces) — the dual solid.</p>
+
+    <p class="hint">These 7 are the axis-locked special cases. <a href="generic.html"
+    style="color:inherit">Build a generic (off-axis) orbit →</a></p>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="three.min.js"></script>
+<script src="OrbitControls.js"></script>
+<script>
+const PALETTE = { T: 0xe8833a, O: 0x3b7dd8, I: 0x2ca58d };
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const nrm=a=>Math.hypot(a[0],a[1],a[2]);
+
+// ---- three.js scene, same setup as the ray-sets viewers ----
+const view=document.getElementById('view'), caption=document.getElementById('caption');
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x0b0e14);
+const cam=new THREE.PerspectiveCamera(45, view.clientWidth/view.clientHeight, 0.01, 100);
+const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(devicePixelRatio);
+renderer.setSize(view.clientWidth, view.clientHeight); view.appendChild(renderer.domElement);
+const controls=new THREE.OrbitControls(cam, renderer.domElement); controls.enableDamping=true;
+scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+const key=new THREE.DirectionalLight(0xffffff, 0.85); key.position.set(0.5,0.85,0.6); scene.add(key);
+const fill=new THREE.DirectionalLight(0xffffff, 0.25); fill.position.set(-0.6,-0.3,-0.5); scene.add(fill);
+const solid=new THREE.Group(); scene.add(solid);
+
+function clear(g){ while(g.children.length){ const c=g.children.pop();
+  if(c.geometry) c.geometry.dispose(); if(c.material) c.material.dispose(); } }
+
+function faceGeom(poly){
+  const g=new THREE.BufferGeometry(), pos=[];
+  for(let i=1;i<poly.length-1;i++) pos.push(...poly[0], ...poly[i], ...poly[i+1]);
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  g.computeVertexNormals(); return g;
+}
+function edgeLoop(poly, colorHex){
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(poly.flat(),3));
+  return new THREE.LineLoop(g, new THREE.LineBasicMaterial({color:colorHex}));
+}
+
+function buildFacePolyhedron(polys, color){
+  const grp=new THREE.Group();
+  polys.forEach(poly=>{
+    grp.add(new THREE.Mesh(faceGeom(poly), new THREE.MeshStandardMaterial(
+      {color, roughness:0.6, metalness:0.0, side:THREE.DoubleSide, flatShading:true})));
+    grp.add(edgeLoop(poly, 0xffffff));
+  });
+  return grp;
+}
+
+function buildSpike(rays, color){
+  const grp=new THREE.Group();
+  const sphereMat=new THREE.MeshStandardMaterial({color:0x2a2d34, roughness:0.7, metalness:0.1});
+  grp.add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), sphereMat));
+  const spikeMat=new THREE.MeshStandardMaterial({color, roughness:0.5, metalness:0.15, flatShading:true});
+  const up=new THREE.Vector3(0,1,0), len=0.7;
+  rays.forEach(r=>{
+    const v=new THREE.Vector3(...r).normalize();
+    const cyl=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,len,14), spikeMat);
+    cyl.quaternion.setFromUnitVectors(up, v);
+    cyl.position.copy(v.clone().multiplyScalar(0.42+len/2));
+    grp.add(cyl);
+    const tip=new THREE.Mesh(new THREE.SphereGeometry(0.05,14,12), spikeMat);
+    tip.position.copy(v.clone().multiplyScalar(0.42+len));
+    grp.add(tip);
+  });
+  return grp;
+}
+
+function frame(maxR){
+  const dist=Math.max(2.0, maxR/Math.tan(Math.PI/8)*1.12);
+  cam.position.copy(new THREE.Vector3(1.1,0.8,1.1).normalize().multiplyScalar(dist));
+  cam.lookAt(0,0,0); controls.target.set(0,0,0); controls.update();
+}
+
+let currentShape=RAYSETS.find(s=>s.shape==='O'&&s.size===6), currentForm='spike';
+
+function render(){
+  clear(solid);
+  const s=currentShape, color=PALETTE[s.shape];
+  let pts;
+  if(currentForm==='spike'){ solid.add(buildSpike(s.rays,color)); pts=s.rays.map(r=>r.map(x=>x*1.12)); }
+  else if(currentForm==='vertex'){ solid.add(buildFacePolyhedron(s.vertexFaces,color)); pts=s.rays; }
+  else { solid.add(buildFacePolyhedron(s.dualFaces,color)); pts=s.dualFaces.flat(); }
+  let maxR=0; pts.forEach(p=>maxR=Math.max(maxR, nrm(p)));
+  frame(maxR);
+  updateReadout(s);
+}
+
+function updateReadout(s){
+  const formLabel={spike:'spike-ball',vertex:'vertex polyhedron',face:'face polyhedron (dual)'}[currentForm];
+  document.getElementById('big').textContent = `${s.shape} · ${s.size}`;
+  document.getElementById('detail').innerHTML =
+    `${s.name}, ${s.size} dots — single orbit under ${s.shape==='T'?'tetrahedral':s.shape==='O'?'octahedral':'icosahedral'} symmetry`;
+  caption.innerHTML = `<b>${s.shape} · ${s.size}</b> — ${s.name}, shown as ${formLabel}`;
+}
+
+// ---- controls ----
+const shapeBtns=document.getElementById('shapeButtons');
+RAYSETS.forEach(s=>{
+  const b=document.createElement('button');
+  b.textContent=`${s.shape}·${s.size}`;
+  b.title=s.name;
+  b.onclick=()=>{ currentShape=s; solid.rotation.y=0; render(); updateActiveShape(); };
+  b.dataset.key=`${s.shape}${s.size}`;
+  shapeBtns.appendChild(b);
+});
+function updateActiveShape(){
+  shapeBtns.querySelectorAll('button').forEach(b=>
+    b.classList.toggle('active', b.dataset.key===`${currentShape.shape}${currentShape.size}`));
+}
+
+const formBtns=document.getElementById('formButtons');
+formBtns.querySelectorAll('button').forEach(b=>{
+  b.onclick=()=>{
+    currentForm=b.dataset.form;
+    formBtns.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    render();
+  };
+});
+
+let rotating=true;
+document.getElementById('rotate').addEventListener('change', e=>rotating=e.target.checked);
+
+// ---- animation ----
+const clock=new THREE.Clock();
+function loop(){
+  requestAnimationFrame(loop);
+  const dt=clock.getDelta();
+  if(rotating) solid.rotation.y += 0.3*dt;
+  controls.update(); renderer.render(scene, cam);
+}
+loop();
+
+updateActiveShape();
+render();
+
+window.addEventListener('resize', ()=>{ cam.aspect=view.clientWidth/view.clientHeight;
+  cam.updateProjectionMatrix(); renderer.setSize(view.clientWidth, view.clientHeight); });
+</script>
+</body>
+</html>
