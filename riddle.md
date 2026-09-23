@@ -1,6 +1,6 @@
 # The riddle, and the restrictions that make its answer 7
 
-Companion to [`notes.md`](notes.md). This file records how the riddle was tightened
+Companion to [`README.md`](README.md). This file records how the riddle was tightened
 step by step until exactly the 7 elementary ray-sets remain, the equivalent ways to
 phrase it, and the phrasings that sound right but don't work. Section 7 turns it into
 a face riddle whose answer is the dual 7 (the Platonic solids plus the two rhombic
@@ -73,7 +73,7 @@ corners of each group.
 - O's and I's families are all distinct.
 
 1 (T) + 3 (O) + 3 (I) = **7**. `script.py` verifies this collapse with an explicit
-orthogonal map.
+rotation.
 
 | label | dots | vertex solid (convex hull) | face solid (shaved dual) |
 |---|---|---|---|
@@ -240,9 +240,14 @@ The convex solids where both faces and edges are all alike are exactly these 7.
 
 - **The cuboctahedron and icosidodecahedron fail.** Their edges are all alike, but they
   have two kinds of faces.
-- **"Shaved from a ball" is required.** It keeps the solid convex. Without it, the four
-  regular star polyhedra (Kepler–Poinsot: spiky, self-intersecting shapes) also have
-  all faces and all edges alike, which would make the answer 11.
+- **"Shaved from a ball" is required.** It keeps the solid convex. Without it, 9
+  self-intersecting star shapes also have all faces and all edges alike, which would
+  make the answer 16:
+  - the 4 regular star polyhedra (Kepler–Poinsot),
+  - the medial and great rhombic triacontahedra,
+  - the small, medial and great triambic icosahedra.
+
+  The last 5 are the duals of the 5 non-convex quasiregular polyhedra.
 
 **As dice:**
 
@@ -261,7 +266,7 @@ The convex solids where both faces and edges are all alike are exactly these 7.
 | candidate | why it fails |
 |---|---|
 | "Every face looks the same" alone | Infinite: all fair dice, including every double pyramid, trapezohedron and disphenoid, plus the duals of the other Archimedean solids. |
-| Faces and edges alike, without "shaved from a ball" | Adds the 4 Kepler–Poinsot star polyhedra. Gives 11. |
+| Faces and edges alike, without "shaved from a ball" | Adds 9 star shapes: the 4 Kepler–Poinsot polyhedra and the 5 duals of the non-convex quasiregular polyhedra. Gives 16. |
 | "Every face is a regular polygon" | Drops the two rhombic solids (their faces are rhombi, not squares). Gives 5. |
 
 ---

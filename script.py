@@ -9,7 +9,7 @@ This script:
   1. builds T, O, I by closing two generator rotations each,
   2. finds each group's pole families (orbits),
   3. shows the naive 9 candidates (3 groups x 3 families) collapse to 7 by
-     proving -- with an explicit orthogonal map, not just matching counts --
+     proving -- with an explicit rotation, not just matching counts --
      that two of T's three families are redundant,
   4. writes data.js for the HTML renders.
 
@@ -86,7 +86,11 @@ def fingerprint(R, decimals=6):
 
 
 def align(A, B):
-    """An orthogonal map carrying ray-set A onto ray-set B, or None."""
+    """A rotation carrying ray-set A onto ray-set B, or None.
+
+    Reflections are skipped: arrangements only count as the same if one is a
+    rotated copy of the other.
+    """
     if len(A) != len(B):
         return None
     for idx in combinations(range(len(A)), 3):
@@ -107,6 +111,8 @@ def align(A, B):
                     continue
                 M = np.column_stack([b1, b2, b3]) @ Pinv
                 if not np.allclose(M.T @ M, np.eye(3), atol=TOL):
+                    continue
+                if np.linalg.det(M) < 0:
                     continue
                 if all(any(np.allclose(M @ a, b, atol=TOL) for b in B) for a in A):
                     return M
@@ -204,11 +210,10 @@ def main():
     kept = sorted(kept)
 
     print(f"\n{len(candidates)} -> {len(kept)} distinct")
-    print("\nmerged away (each confirmed by an explicit orthogonal map):")
+    print("\nmerged away (each confirmed by an explicit rotation):")
     for i, (r, M) in sorted(merged.items()):
-        kind = "rotation" if np.linalg.det(M) > 0 else "reflection"
         a, b = candidates[i], candidates[r]
-        print(f"  {a.shape} · {a.size:<2} = {b.shape} · {b.size:<2}  ({kind})")
+        print(f"  {a.shape} · {a.size:<2} = {b.shape} · {b.size}")
 
     print(f"\nthe {len(kept)} elementary ray-sets:")
     export = []
