@@ -10,7 +10,7 @@
   html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
   #app{display:flex;height:100vh;overflow:hidden;}
   #view{flex:1;position:relative;}
-  #panel{width:360px;background:var(--panel);padding:18px;overflow-y:auto;border-left:1px solid var(--line);}
+  #panel{width:400px;background:var(--panel);padding:18px;overflow-y:auto;border-left:1px solid var(--line);}
   h1{font-size:16px;margin:0 0 6px;}
   label{font-size:12px;color:var(--muted);display:block;margin:14px 0 6px;}
   .row{display:flex;gap:8px;flex-wrap:wrap;}
@@ -24,12 +24,6 @@
   .step:hover{border-color:var(--accent,#1f6feb);}
   .check{display:flex;align-items:center;gap:7px;margin-top:12px;cursor:pointer;font-size:12px;color:var(--muted);}
   .check input{width:auto;}
-  .readout{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;margin-top:16px;line-height:1.6;}
-  .big{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;margin-bottom:6px;}
-  .solidName{font-size:13px;font-weight:600;margin-bottom:4px;}
-  .badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:2px 7px;border-radius:5px;margin-left:6px;vertical-align:3px;}
-  .badge.axis{background:#3a2c14;color:#e8b23a;}
-  .badge.generic{background:#132a24;color:#4fd3ae;}
   #view canvas{display:block;}
   #paneBoxes{position:absolute;inset:0;pointer-events:none;}
   .paneBox{position:absolute;}
@@ -45,16 +39,23 @@
   .ghost:hover{border-color:var(--accent,#1f6feb);}
 
   .solidList{display:flex;flex-direction:column;gap:4px;}
-  .solidList button{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:10px;width:100%;
-    padding:5px 10px 5px 5px;border-radius:7px;border:1px solid var(--line);background:var(--field);
-    color:var(--ink);font-size:12px;text-align:left;cursor:pointer;}
-  .solidList button:hover{border-color:var(--g);}
-  .solidList button.active{background:var(--g);border-color:var(--g);color:#0b0e14;font-weight:700;}
-  .solidList .tag{height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;
-    font-size:11px;font-weight:800;color:#0b0e14;background:var(--g);}
-  .solidList button.active .tag{background:#0b0e14;color:var(--g);}
-  .solidList .dots{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;}
-  .solidList button.active .dots{color:#0b0e14;}
+  .solidList .solid,.solidHead{display:grid;grid-template-columns:48px 1fr 1fr 22px;align-items:center;gap:8px;}
+  .solidList .solid{padding:5px 8px 5px 5px;border-radius:7px;border:1px solid var(--line);background:var(--field);
+    color:var(--ink);font-size:12px;}
+  .solidList .solid:hover{border-color:var(--g);}
+  .solidList .solid.active{background:var(--g);border-color:var(--g);color:#0b0e14;}
+  .solidList .solid button.pick{padding:1px 0;border:0;background:none;color:inherit;font:inherit;text-align:left;
+    cursor:pointer;hyphens:auto;overflow-wrap:anywhere;}
+  .solidList .solid button.pick:hover{text-decoration:underline;}
+  .solidList .solid.active .shown{font-weight:700;}
+  .solidList .tags{display:flex;gap:4px;}
+  .solidList .tag{width:22px;height:20px;padding:0;border:0;border-radius:5px;display:flex;align-items:center;justify-content:center;
+    font:inherit;font-size:11px;font-weight:800;color:#0b0e14;background:var(--tg);cursor:pointer;}
+  .solidList .tag.current{background:#0b0e14;color:var(--tg);}
+  .solidList .dots{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;}
+  .solidList .solid.active .dots{color:#0b0e14;}
+  .solidHead{font-size:11px;color:var(--muted);margin:14px 0 6px;padding:0 8px 0 5px;}
+  .solidHead span:last-child{text-align:right;}
   .solidList .pv{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-left:6px;opacity:.7;}
 </style>
 </head>
@@ -76,23 +77,18 @@
     <label for="theta">Generating point — polar angle <span id="thetaVal"></span></label>
     <div class="sliderRow">
       <button class="step" data-for="theta" data-d="-1" aria-label="Polar angle down 1°">‹</button>
-      <input type="range" id="theta" min="0" max="180" step="1" value="37">
+      <input type="range" id="theta" min="0" max="180" step="1" value="6">
       <button class="step" data-for="theta" data-d="1" aria-label="Polar angle up 1°">›</button>
     </div>
     <label for="phi">Generating point — azimuth <span id="phiVal"></span></label>
     <div class="sliderRow">
       <button class="step" data-for="phi" data-d="-1" aria-label="Azimuth down 1°">‹</button>
-      <input type="range" id="phi" min="0" max="360" step="1" value="52">
+      <input type="range" id="phi" min="0" max="360" step="1" value="0">
       <button class="step" data-for="phi" data-d="1" aria-label="Azimuth up 1°">›</button>
     </div>
 
     <div class="btnRow"><button class="ghost" id="randomize">Randomize point</button></div>
 
-    <label style="margin-top:18px;">Jump to one of the 7 (on an axis)</label>
-    <div class="solidList" id="presetsSeven"></div>
-
-    <label style="margin-top:18px;">Jump to an Archimedean solid</label>
-    <div class="solidList" id="presetsArch"></div>
     <label style="margin-top:18px;">Show as</label>
     <div class="row" id="formButtons">
       <button data-form="spike" class="active">Spike-ball</button>
@@ -104,11 +100,9 @@
 
     <label class="check"><input type="checkbox" id="rotate" checked> slowly rotate</label>
 
-    <div class="readout">
-      <div class="big" id="big"></div>
-      <div class="solidName" id="solidName" hidden></div>
-      <div id="detail"></div>
-    </div>
+    <label style="margin-top:18px;">Jump to a solid</label>
+    <div class="solidHead"><span>group</span><span>vertex hull</span><span>face dual</span><span>dots</span></div>
+    <div class="solidList" id="presets"></div>
   </div>
 </div>
 
@@ -118,37 +112,38 @@
 const PHI_GOLD = (1 + Math.sqrt(5)) / 2;
 const TOL = 1e-6;
 const PALETTE = { T: 0xe8833a, O: 0x3b7dd8, I: 0x2ca58d };
-const ORDER = { T: 12, O: 24, I: 60 };
 const hex = c => '#'+c.toString(16).padStart(6,'0');
 
-// The 7 pivot sets: seed points sit exactly on a face, edge or corner axis.
-// Same frame as script.py / data.js, but exact rather than rounded.
-const SEVEN = [
-  {g:'T', name:'tetrahedron',       dual:'tetrahedron',             p:[1,1,1]},
-  {g:'O', name:'octahedron',        dual:'cube',                    p:[0,0,1]},
-  {g:'O', name:'cube',              dual:'octahedron',              p:[1,1,1]},
-  {g:'O', name:'cuboctahedron',     dual:'rhombic dodecahedron',    p:[0,1,1]},
-  {g:'I', name:'icosahedron',       dual:'dodecahedron',            p:[0,1,PHI_GOLD]},
-  {g:'I', name:'dodecahedron',      dual:'icosahedron',             p:[1,0,PHI_GOLD*PHI_GOLD]},
-  {g:'I', name:'icosidodecahedron', dual:'rhombic triacontahedron', p:[1,1/PHI_GOLD,PHI_GOLD]},
-];
-
-// Seed points for the Archimedean solids that are a single rotation orbit.
-// Verified offline: orbit size, all edges equal, and face counts match each solid.
-// Snub points were solved numerically (5 equidistant nearest neighbours).
-const ARCHIMEDEAN = [
+// Every solid on the page, by group then dot count. The 7 pivot sets (pivot:true)
+// have their seed exactly on a face, edge or corner axis; same frame as script.py /
+// data.js, but exact rather than rounded. The rest are the Archimedean solids that
+// are a single rotation orbit. Verified offline: orbit size, all edges equal, and
+// face counts match each solid. Snub points were solved numerically (5 equidistant
+// nearest neighbours). g is the solid's full rotation symmetry; `also` lists smaller
+// groups that build the same solid as a single orbit (e.g. T makes the octahedron).
+const PRESETS = [
+  {g:'T', name:'tetrahedron',            dual:'tetrahedron',                    p:[1,1,1], pivot:true},
   {g:'T', name:'truncated tetrahedron',  dual:'triakis tetrahedron',            p:[0.904534033733,0.301511344578,0.301511344578]},
-  {g:'O', name:'cuboctahedron',          dual:'rhombic dodecahedron',           p:[0.707106781187,0.707106781187,0], pivot:true},
+  {g:'O', name:'octahedron',             dual:'cube',                           p:[0,0,1], pivot:true, also:['T']},
+  {g:'O', name:'cube',                   dual:'octahedron',                     p:[1,1,1], pivot:true},
+  {g:'O', name:'cuboctahedron',          dual:'rhombic dodecahedron',           p:[0,1,1], pivot:true, also:['T']},
   {g:'O', name:'truncated cube',         dual:'triakis octahedron',             p:[0.281084637715,0.678598344546,0.678598344546]},
   {g:'O', name:'truncated octahedron',   dual:'tetrakis hexahedron',            p:[0,0.4472135955,0.894427191]},
   {g:'O', name:'rhombicuboctahedron',    dual:'deltoidal icositetrahedron',     p:[0.357406744337,0.357406744337,0.862856209461]},
   {g:'O', name:'snub cube',              dual:'pentagonal icositetrahedron',    p:[-0.251358645685,0.462320627818,0.850340207407]},
-  {g:'I', name:'icosidodecahedron',      dual:'rhombic triacontahedron',        p:[0,0,1], pivot:true},
+  {g:'I', name:'icosahedron',            dual:'dodecahedron',                   p:[0,1,PHI_GOLD], pivot:true, also:['T']},
+  {g:'I', name:'dodecahedron',           dual:'icosahedron',                    p:[1,0,PHI_GOLD*PHI_GOLD], pivot:true},
+  {g:'I', name:'icosidodecahedron',      dual:'rhombic triacontahedron',        p:[1,1/PHI_GOLD,PHI_GOLD], pivot:true},
   {g:'I', name:'truncated dodecahedron', dual:'triakis icosahedron',            p:[0.168381405887,0,0.985721919281]},
   {g:'I', name:'truncated icosahedron',  dual:'pentakis dodecahedron',          p:[0,0.201774106168,0.979432085486]},
   {g:'I', name:'rhombicosidodecahedron', dual:'deltoidal hexecontahedron',      p:[0.223918979795,0.223918979795,0.948536019862]},
   {g:'I', name:'snub dodecahedron',      dual:'pentagonal hexecontahedron',     p:[-0.337843283248,-0.65648060127,0.674459143404]},
 ];
+const groupsOf = s => ['T','O','I'].filter(g => g===s.g || (s.also||[]).includes(g));
+// The named solid on screen, if any, and the symmetry to report for it: the solid's
+// own full symmetry, whichever group built it.
+const shownSolid = () => activePreset && groupsOf(activePreset).includes(currentGroup) ? activePreset : null;
+const shownSym = () => (shownSolid() || {g:currentGroup}).g;
 
 function rot(axis, angle){
   let [x,y,z] = axis; const n = Math.hypot(x,y,z); x/=n; y/=n; z/=n;
@@ -396,7 +391,6 @@ function render(){
   const p = activePoint || pointFromSliders();
   const rays = orbit(GROUPS[currentGroup], p);
   const color = PALETTE[currentGroup];
-  const isAxis = rays.length < ORDER[currentGroup];
   document.documentElement.style.setProperty('--accent', hex(color));
 
   const split = currentForm==='all';
@@ -442,41 +436,22 @@ function render(){
   if(lastFramedR===null || Math.abs(maxR-lastFramedR)/lastFramedR > 0.15){
     frame(maxR); lastFramedR = maxR;
   }
-  updateReadout(rays, isAxis, shown);
+  updateReadout(rays, shown);
   updateActivePreset();
 }
 
 function paneLabel(form, ok, n){
-  const named = activePreset && activePreset.g===currentGroup ? activePreset : null;
+  const named = shownSolid();
   let what;
   if(!ok) what = 'no solid: too few dots';
-  else if(form==='spike') what = `${n} dots`;
+  else if(form==='spike') what = `${shownSym()} symmetry, ${n} dots`;
   else if(form==='vertex') what = named ? named.name : `${n} corners`;
   else what = named ? named.dual : `${n} faces`;
   return `<b>${FORM_LABEL[form]}</b><span>${what}</span>`;
 }
 
-function updateReadout(rays, isAxis, shown){
-  const groupName = {T:'tetrahedral', O:'octahedral', I:'icosahedral'}[currentGroup];
-  const badge = isAxis
-    ? `<span class="badge axis">on axis</span>`
-    : `<span class="badge generic">generic</span>`;
-  document.getElementById('big').innerHTML = `${currentGroup} · ${rays.length}${badge}`;
-
-  const nameEl = document.getElementById('solidName');
-  const named = activePreset && activePreset.g===currentGroup ? activePreset : null;
-  if(named){
-    nameEl.hidden = false;
-    nameEl.textContent = shown==='face' ? `${named.dual} (dual of the ${named.name})`
-                       : shown==='all'  ? `${named.name} · dual: ${named.dual}`
-                       : named.name;
-  } else {
-    nameEl.hidden = true;
-  }
-
-  document.getElementById('detail').innerHTML = isAxis
-    ? `Landed on a symmetry axis, so this is one of the 7 pivot sets. The orbit drops from ${ORDER[currentGroup]} to ${rays.length} dots under ${groupName} symmetry.`
-    : `${rays.length} dots: a full generic orbit under ${groupName} symmetry, the most this group allows. No dot is a pivot.`;
+function updateReadout(rays, shown){
+  const named = shownSolid();
   if(activePoint){
     const a = anglesOf(activePoint);
     document.getElementById('thetaVal').textContent = `${fmtDeg(a.theta)} · exact`;
@@ -485,10 +460,13 @@ function updateReadout(rays, isAxis, shown){
     document.getElementById('thetaVal').textContent = thetaEl.value + '°';
     document.getElementById('phiVal').textContent = phiEl.value + '°';
   }
-  caption.hidden = shown==='all';   // each pane carries its own label instead
-  const formLabel = {spike:'spike-ball', vertex:'vertex hull', face:'face polyhedron (dual)'}[shown];
-  const title = named ? (shown==='face' ? named.dual : named.name) : `${currentGroup} · ${rays.length}`;
-  caption.innerHTML = `<b>${title}</b> ${isAxis?'(axis-locked)':'(generic)'}, shown as ${formLabel}`;
+  // Describes the solid on screen. All 3 has no caption: its pane labels say the
+  // same thing. The face form shows the dual, whose faces stand where the dots were.
+  caption.hidden = shown==='all';
+  const cap = w => w[0].toUpperCase() + w.slice(1);
+  const face = shown==='face';
+  const name = named ? cap(face ? named.dual : named.name) + ', ' : '';
+  caption.innerHTML = `<b>${name}${shownSym()} symmetry, ${rays.length} ${face ? 'faces' : 'dots'}</b>`;
 }
 
 // ---- controls ----
@@ -503,28 +481,39 @@ function updateActiveGroup(){
   groupBtns.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.g===currentGroup));
 }
 
-// One row per solid: group tag, name, dot count.
-const PRESETS = [...SEVEN, ...ARCHIMEDEAN];
+// One row per solid: a chip per group that can build it, the solid (vertex hull),
+// its dual (face view), dot count. A chip opens the solid in that group. The names
+// keep the current group when it can build the solid, else use the solid's own;
+// the left name leaves Face view, the right name switches to it.
+function selectSolid(s, g, form){
+  activePreset=s; activePoint=unit(s.p); currentGroup=g;
+  slidersFromPoint(activePoint);
+  panes.forEach(pn=>pn.solid.rotation.y=0);
+  updateActiveGroup();
+  if(form && form!==currentForm) setForm(form); else render();
+}
 function buildSolidList(el, list){
   list.forEach(s=>{
     s.dots = orbit(GROUPS[s.g], unit(s.p)).length;
-    const b=document.createElement('button');
-    b.style.setProperty('--g', hex(PALETTE[s.g]));
-    b.innerHTML = `<span class="tag">${s.g}</span>`
-      + `<span>${s.name}${s.pivot ? '<span class="pv">pivot</span>' : ''}</span>`
-      + `<span class="dots">${s.dots} dots</span>`;
-    b.onclick=()=>{
-      activePreset=s; activePoint=unit(s.p); currentGroup=s.g;
-      slidersFromPoint(activePoint);
-      panes.forEach(pn=>pn.solid.rotation.y=0);
-      updateActiveGroup(); render();
-    };
-    s.button=b;
-    el.appendChild(b);
+    const row=document.createElement('div');
+    row.className='solid';
+    row.innerHTML = `<span class="tags">${groupsOf(s).map(g=>
+        `<button class="tag" data-g="${g}" style="--tg:${hex(PALETTE[g])}" aria-label="${s.name}, ${g} group">${g}</button>`).join('')}</span>`
+      + `<button class="pick name">${s.name}${s.pivot ? '<span class="pv">pivot</span>' : ''}</button>`
+      + `<button class="pick dual">${s.dual}</button>`
+      + `<span class="dots">${s.dots}</span>`;
+    const g = () => groupsOf(s).includes(currentGroup) ? currentGroup : s.g;
+    s.tagBtns=[...row.querySelectorAll('.tag')];
+    s.tagBtns.forEach(t=>t.onclick=()=>selectSolid(s, t.dataset.g, null));
+    s.nameBtn=row.querySelector('.name');
+    s.dualBtn=row.querySelector('.dual');
+    s.nameBtn.onclick=()=>selectSolid(s, g(), currentForm==='face' ? 'vertex' : null);
+    s.dualBtn.onclick=()=>selectSolid(s, g(), currentForm==='all' ? null : 'face');
+    s.row=row;
+    el.appendChild(row);
   });
 }
-buildSolidList(document.getElementById('presetsSeven'), SEVEN);
-buildSolidList(document.getElementById('presetsArch'), ARCHIMEDEAN);
+buildSolidList(document.getElementById('presets'), PRESETS);
 
 // ---- snapping ----
 // Every placement of the seed that produces one of the 16 solids: its whole orbit,
@@ -534,16 +523,15 @@ buildSolidList(document.getElementById('presetsArch'), ARCHIMEDEAN);
 // so no two targets round to the same whole-degree slider position.
 const MIRROR = { T:v=>[v[1],v[0],v[2]], O:v=>[v[0],v[1],-v[2]], I:v=>[-v[0],v[1],v[2]] };
 const SNAP_TARGETS = { T:[], O:[], I:[] };
-PRESETS.forEach(s=>{
-  const list = SNAP_TARGETS[s.g];
-  if(list.some(t=>t.preset.name===s.name)) return;   // cuboctahedron etc. listed twice
-  const p = unit(s.p), m = MIRROR[s.g](p), neg = v=>v.map(c=>-c);
+PRESETS.forEach(s=>groupsOf(s).forEach(g=>{
+  const list = SNAP_TARGETS[g];
+  const p = unit(s.p), m = MIRROR[g](p), neg = v=>v.map(c=>-c);
   [p, neg(p), m, neg(m)].forEach(seed=>{
-    orbit(GROUPS[s.g], seed).forEach(q=>{
+    orbit(GROUPS[g], seed).forEach(q=>{
       if(!list.some(t=>dot(t.q,q) > 1-1e-9)) list.push({preset:s, q});
     });
   });
-});
+}));
 // A whole-degree slider position, as a lookup key. At a pole the azimuth doesn't
 // matter (every azimuth is the same point), so it's left out.
 const sliderKey = (theta, phi) => (theta===0 || theta===180) ? `${theta}` : `${theta},${phi%360}`;
@@ -560,23 +548,26 @@ function applySliders(){
   activePoint  = hit ? hit.q : null;
 }
 
-// The cuboctahedron and icosidodecahedron appear in both lists; light up both rows.
 function updateActivePreset(){
-  PRESETS.forEach(s=>s.button.classList.toggle('active',
-    !!activePreset && s.name===activePreset.name && s.g===currentGroup));
+  PRESETS.forEach(s=>{
+    const on = s===shownSolid();
+    s.row.classList.toggle('active', on);
+    s.row.style.setProperty('--g', hex(PALETTE[on ? currentGroup : s.g]));
+    s.tagBtns.forEach(t=>t.classList.toggle('current', on && t.dataset.g===currentGroup));
+    s.nameBtn.classList.toggle('shown', on && currentForm!=='face');
+    s.dualBtn.classList.toggle('shown', on && currentForm==='face');
+  });
 }
 
 const formBtns=document.getElementById('formButtons');
-formBtns.querySelectorAll('button').forEach(b=>{
-  b.onclick=()=>{
-    currentForm=b.dataset.form;
-    formBtns.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    layoutPaneBoxes();
-    lastFramedR=null;   // pane shape changed, so refit
-    render();
-  };
-});
+function setForm(form){
+  currentForm=form;
+  formBtns.querySelectorAll('button').forEach(x=>x.classList.toggle('active', x.dataset.form===form));
+  layoutPaneBoxes();
+  lastFramedR=null;   // pane shape changed, so refit
+  render();
+}
+formBtns.querySelectorAll('button').forEach(b=>{ b.onclick=()=>setForm(b.dataset.form); });
 
 // Render at most once per animation frame, always with the latest slider value. (A
 // debounce would never fire while an arrow key is held, because key repeat keeps
