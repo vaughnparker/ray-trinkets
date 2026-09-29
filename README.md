@@ -36,6 +36,10 @@ Why the answer is exactly 7, and which wordings of the riddle break it, is in
 3. **Face solid.** Shave a flat face into the ball at each dot, until neighboring
    faces meet. This gives the 5 Platonic solids plus the 2 rhombic ones.
 
+   Stopping earlier, the moment neighboring flats just touch, gives the
+   **kissing-flats balls**. The round flats are the dots, the touching points are the
+   edges, and the leftover curved patches are the faces of the vertex solid.
+
 Between them, the two solid forms cover all 9 convex polyhedra whose edges are all
 alike.
 
@@ -48,6 +52,12 @@ alike.
 - `renders/index.html`: interactive 3D viewer for the 7, in all three forms.
 - `renders/generic.html`: sliders for the arrangements the pivot rule excludes, with
   jumps to the Archimedean solids.
+- `renders/seven-spike-balls.html`: the 7 as spike balls on a stand, with buttons
+  that act out the riddle (twirl about the held spike, or hold it by another spike),
+  facts for each ball, and drilling angles.
+- `kissing_flats.py`: writes the kissing-flats models to `models/kissing-flats-20mm/`
+  (one STL per ball, in millimetres, resting on a flat) and renders
+  `renders/kissing-flats.png`.
 
 ## Running it
 
@@ -58,6 +68,15 @@ Open `renders/index.html` in a browser; no build step. To regenerate the data
 python3 script.py
 ```
 
+To rebuild the kissing-flats models and render (needs `numpy`, `matplotlib`,
+`trimesh` and `manifold3d`), optionally at another size:
+
+```
+python3 kissing_flats.py
+python3 kissing_flats.py --diameter 25
+```
+
 ## Next
 
-Pick a form and material, and design an actual printable model.
+Get the 20 mm kissing-flats models cast in metal (Shapeways: Lost Wax Casting,
+polished finish).

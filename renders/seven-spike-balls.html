@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html, body { margin: 0; } [hidden] { display: none !important; }</style>
+<title>The Seven Spike Balls</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #eceff1;
+  --surface: #f7f9fa;
+  --ink: #17212b;
+  --muted: #56626e;
+  --rule: #c9d1d8;
+  --brass: #94661a;
+  --steel: #2d5f8e;
+  --stand-hi: #a7b1bb;
+  --stand-lo: #3b4550;
+  --btn: #17212b;
+  --btn-ink: #f7f9fa;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10151a; --surface: #171e25; --ink: #e4e9ed; --muted: #93a0ac; --rule: #2a343f;
+    --brass: #d8a64a; --steel: #86b6e3; --stand-hi: #8893a0; --stand-lo: #2b333b;
+    --btn: #e4e9ed; --btn-ink: #10151a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10151a; --surface: #171e25; --ink: #e4e9ed; --muted: #93a0ac; --rule: #2a343f;
+  --brass: #d8a64a; --steel: #86b6e3; --stand-hi: #8893a0; --stand-lo: #2b333b;
+  --btn: #e4e9ed; --btn-ink: #10151a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55;
+  padding-inline: 20px; padding-block: 28px 56px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: 0.01em; text-wrap: balance; margin: 0; line-height: 1.05; }
+h1 { font-size: clamp(40px, 7vw, 72px); font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
+h2 { font-size: 28px; text-transform: uppercase; letter-spacing: 0.04em; }
+p { margin: 0; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brass); }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* header */
+header { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px 48px; align-items: end; }
+header .title { display: grid; gap: 10px; }
+.riddle { font-size: 18px; max-width: 58ch; display: grid; gap: 10px; }
+.riddle blockquote { margin: 0; padding-left: 16px; border-left: 2px solid var(--brass); font-style: italic; }
+.riddle .answer { color: var(--muted); }
+.riddle .answer b { color: var(--ink); font-weight: 600; }
+
+/* bench */
+.bench { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+.stage { position: relative; border-right: 1px solid var(--rule); display: grid; grid-template-rows: auto auto; }
+.canvas-box { position: relative; width: 100%; aspect-ratio: 1 / 1; max-height: 560px; max-width: 100%; touch-action: none; cursor: grab; }
+.canvas-box:active { cursor: grabbing; }
+.canvas-box canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hint { position: absolute; left: 16px; top: 14px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); pointer-events: none; }
+.controls { display: grid; gap: 10px; padding: 16px; border-top: 1px solid var(--rule); }
+.btns { display: flex; flex-wrap: wrap; gap: 10px; }
+button.act {
+  font: 600 15px/1 var(--body); padding: 12px 16px; border-radius: 4px; border: 1px solid var(--btn);
+  background: var(--btn); color: var(--btn-ink); cursor: pointer;
+}
+button.act.alt { background: transparent; color: var(--ink); }
+button.act:hover { opacity: 0.88; }
+button:focus-visible { outline: 2px solid var(--steel); outline-offset: 2px; }
+.status { min-height: 3.1em; color: var(--muted); font-size: 15px; }
+.status .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--steel); vertical-align: 0; margin-right: 6px; }
+
+.info { padding: 24px; display: grid; gap: 18px; align-content: start; }
+.info h2.name { font-size: clamp(38px, 5vw, 54px); text-transform: none; letter-spacing: 0.005em; font-weight: 700; }
+.info .count { font-family: var(--display); font-size: 22px; color: var(--muted); font-weight: 500; }
+dl.facts { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0; border-top: 1px solid var(--rule); }
+dl.facts dt, dl.facts dd { padding: 9px 0; border-bottom: 1px solid var(--rule); margin: 0; }
+dl.facts dt { color: var(--muted); font-size: 14px; padding-right: 18px; }
+dl.facts dd { font-size: 15px; }
+
+/* set */
+.set { display: grid; gap: 14px; }
+.set-head { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; justify-content: space-between; }
+.set-head p { color: var(--muted); font-size: 15px; }
+.families { display: flex; flex-wrap: wrap; gap: 16px; }
+.family { display: grid; gap: 8px; width: min-content; }
+.family .fam-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: grid; gap: 2px; }
+.family .fam-label span:last-child { color: var(--brass); }
+.family .items { display: flex; gap: 8px; }
+button.pick {
+  display: grid; justify-items: center; gap: 2px; width: 108px; padding: 6px 4px 10px; border-radius: 6px;
+  border: 1px solid var(--rule); background: var(--surface); color: var(--ink); cursor: pointer; font: inherit;
+}
+button.pick canvas { width: 92px; height: 92px; }
+button.pick .pn { font-family: var(--display); font-size: 16px; font-weight: 600; line-height: 1.1; text-align: center; hyphens: manual; overflow-wrap: anywhere; max-width: 100%; }
+button.pick .pc { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+button.pick[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+button.pick:hover { border-color: var(--muted); }
+
+/* making */
+.making { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+.making section { display: grid; gap: 14px; }
+.making p.note { color: var(--muted); font-size: 15px; max-width: 62ch; }
+.table-box { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; font-family: var(--mono); font-weight: 500; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 8px 12px 8px 0; border-bottom: 1px solid var(--ink); white-space: nowrap; }
+td { padding: 8px 12px 8px 0; border-bottom: 1px solid var(--rule); vertical-align: top; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+td.turns { font-size: 13px; }
+dl.spec { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); border-top: 1px solid var(--ink); }
+dl.spec dt, dl.spec dd { margin: 0; padding: 9px 0; border-bottom: 1px solid var(--rule); font-size: 15px; }
+dl.spec dt { color: var(--muted); padding-right: 18px; }
+
+.why { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 16px 40px; border-top: 1px solid var(--rule); padding-top: 28px; }
+.why .body { display: grid; gap: 12px; max-width: 66ch; }
+
+@media (max-width: 860px) {
+  header, .bench, .making, .why { grid-template-columns: minmax(0, 1fr); }
+  .stage { border-right: 0; border-bottom: 1px solid var(--rule); }
+}
+@media (max-width: 420px) {
+  body { padding-inline: 16px; }
+  button.pick { width: 96px; }
+  button.pick canvas { width: 80px; height: 80px; }
+  .info { padding: 18px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">
+      <span class="eyebrow">A set of seven</span>
+      <h1>The Seven Spike Balls</h1>
+    </div>
+    <div class="riddle">
+      <blockquote>A ball has equal spikes, and their tips don't all lie on one circle. Whichever spike you hold it by, it looks the same. Twirl it around the spike you're holding, and it matches itself before a full turn. How many designs are there?</blockquote>
+      <p class="answer"><b>Seven.</b> Drag a ball to look around it, then try both tests on it.</p>
+    </div>
+  </header>
+
+  <div class="bench">
+    <div class="stage">
+      <div class="canvas-box" id="stageBox" role="img" aria-label="3D view of the selected spike ball on its stand">
+        <canvas id="stage"></canvas>
+        <span class="hint">Drag to look around</span>
+      </div>
+      <div class="controls">
+        <div class="btns">
+          <button class="act" id="twirl" type="button">Twirl ⅓ turn</button>
+          <button class="act alt" id="rehold" type="button">Hold by another spike</button>
+        </div>
+        <p class="status" id="status" aria-live="polite"></p>
+      </div>
+    </div>
+    <div class="info">
+      <div>
+        <span class="eyebrow" id="fam"></span>
+        <h2 class="name" id="name"></h2>
+        <div class="count" id="count"></div>
+      </div>
+      <dl class="facts" id="facts"></dl>
+    </div>
+  </div>
+
+  <div class="set">
+    <div class="set-head">
+      <h2>The set</h2>
+      <p>Grouped by symmetry family, the way they sit on the stand: 1, 3, 3.</p>
+    </div>
+    <div class="families" id="families"></div>
+  </div>
+
+  <div class="making">
+    <section>
+      <h2>Drilling the <span id="drillName"></span></h2>
+      <p class="note">Hold hole 1 pointing straight down. Tilt is the angle from hole 1. Turn is measured around hole 1's axis, starting from hole 2. All seven balls are their own mirror images, so either direction of turn gives the same ball.</p>
+      <div class="table-box">
+        <table>
+          <thead><tr><th>Holes</th><th>Tilt</th><th>Turn about hole 1</th></tr></thead>
+          <tbody id="drill"></tbody>
+        </table>
+      </div>
+    </section>
+    <section>
+      <h2>Build spec</h2>
+      <dl class="spec" id="spec"></dl>
+      <p class="note">Every ball uses the same core, spikes and tips, so the only difference between them is how many spikes there are and where they point.</p>
+    </section>
+  </div>
+
+  <div class="why">
+    <h2>Why only seven</h2>
+    <div class="body">
+      <p>Holding the ball by any spike and seeing the same thing means a rotation carries every spike onto every other. Twirling it about a spike means each spike lies on a rotation axis of the whole ball.</p>
+      <p>A ball that isn't flat needs tetrahedral, octahedral or icosahedral symmetry, and each of those has three kinds of axis: through corners, through face centres and through edge midpoints. Putting one spike at the end of every axis of one kind gives nine candidates.</p>
+      <p>In the tetrahedral family, two of the three kinds give tetrahedra that are turned copies of each other, and the third gives the octahedron, which already belongs to the octahedral family. That leaves 1 + 3 + 3 = 7.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const BALLS = [{"name":"tetrahedron","family":"tetrahedral","dual":"tetrahedron","n":4,"k":3,"rotations":12,"nn":109.47,"nnCount":3,"opposite":false,"territory":"equilateral triangle","puzzle":"Pyraminx tips","grams":41,"dirs":[[0.0,0.0,-1.0],[0.942809042,0.0,0.333333333],[-0.471404521,0.816496581,0.333333333],[-0.471404521,-0.816496581,0.333333333]],"hold":[[[1.0,0.0,0.0],[0.0,1.0,0.0],[-0.0,0.0,1.0]],[[-0.166666667,0.866025404,0.471404521],[0.288675135,0.5,-0.816496581],[-0.942809042,0.0,-0.333333333]],[[-0.166666667,0.288675135,-0.942809042],[0.866025404,0.5,0.0],[0.471404521,-0.816496581,-0.333333333]],[[-0.166666667,-0.288675135,-0.942809042],[-0.866025404,0.5,0.0],[0.471404521,0.816496581,-0.333333333]]],"rings":[{"tilt":0.0,"turns":[0.0]},{"tilt":109.47,"turns":[0.0,120.0,240.0]}]},{"name":"octahedron","family":"octahedral","dual":"cube","n":6,"k":4,"rotations":24,"nn":90.0,"nnCount":4,"opposite":true,"territory":"square","puzzle":"Rubik's Cube faces","grams":43,"dirs":[[0.0,0.0,-1.0],[1.0,0.0,0.0],[0.0,1.0,0.0],[-1.0,0.0,0.0],[0.0,-1.0,0.0],[0.0,0.0,1.0]],"hold":[[[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]],[[0.0,0.0,1.0],[0.0,1.0,0.0],[-1.0,0.0,0.0]],[[1.0,0.0,0.0],[0.0,0.0,1.0],[0.0,-1.0,0.0]],[[0.0,0.0,-1.0],[0.0,1.0,0.0],[1.0,0.0,0.0]],[[1.0,0.0,0.0],[0.0,0.0,-1.0],[0.0,1.0,0.0]],[[1.0,0.0,0.0],[0.0,-1.0,0.0],[0.0,0.0,-1.0]]],"rings":[{"tilt":0.0,"turns":[0.0]},{"tilt":90.0,"turns":[0.0,90.0,180.0,270.0]},{"tilt":180.0,"turns":[0.0]}]},{"name":"cube","family":"octahedral","dual":"octahedron","n":8,"k":3,"rotations":24,"nn":70.53,"nnCount":3,"opposite":true,"territory":"equilateral triangle","puzzle":"Skewb and Dino Cube corners","grams":46,"dirs":[[0.0,0.0,-1.0],[0.942809042,0.0,-0.333333333],[-0.471404521,0.816496581,-0.333333333],[-0.471404521,-0.816496581,-0.333333333],[0.471404521,0.816496581,0.333333333],[-0.942809042,0.0,0.333333333],[0.471404521,-0.816496581,0.333333333],[0.0,0.0,1.0]],"hold":[[[1.0,0.0,0.0],[0.0,1.0,0.0],[-0.0,0.0,1.0]],[[0.166666667,0.866025404,0.471404521],[-0.288675135,0.5,-0.816496581],[-0.942809042,0.0,0.333333333]],[[0.166666667,-0.288675135,-0.942809042],[0.866025404,0.5,0.0],[0.471404521,-0.816496581,0.333333333]],[[0.666666667,-0.577350269,0.471404521],[0.577350269,0.0,-0.816496581],[0.471404521,0.816496581,0.333333333]],[[-0.166666667,-0.288675135,0.942809042],[-0.866025404,0.5,0.0],[-0.471404521,-0.816496581,-0.333333333]],[[-0.166666667,-0.866025404,-0.471404521],[-0.288675135,0.5,-0.816496581],[0.942809042,0.0,-0.333333333]],[[0.833333333,0.288675135,-0.471404521],[-0.288675135,-0.5,-0.816496581],[-0.471404521,0.816496581,-0.333333333]],[[0.5,0.866025404,0.0],[0.866025404,-0.5,0.0],[-0.0,0.0,-1.0]]],"rings":[{"tilt":0.0,"turns":[0.0]},{"tilt":70.53,"turns":[0.0,120.0,240.0]},{"tilt":109.47,"turns":[60.0,180.0,300.0]},{"tilt":180.0,"turns":[0.0]}]},{"name":"cuboctahedron","family":"octahedral","dual":"rhombic dodecahedron","n":12,"k":2,"rotations":24,"nn":60.0,"nnCount":4,"opposite":true,"territory":"rhombus","puzzle":"Helicopter Cube edges","grams":51,"dirs":[[0.0,0.0,-1.0],[0.866025404,0.0,-0.5],[-0.288675135,0.816496581,-0.5],[-0.866025404,0.0,-0.5],[0.288675135,-0.816496581,-0.5],[0.577350269,0.816496581,0.0],[-0.577350269,-0.816496581,0.0],[0.866025404,0.0,0.5],[-0.288675135,0.816496581,0.5],[-0.866025404,0.0,0.5],[0.288675135,-0.816496581,0.5],[0.0,0.0,1.0]],"hold":[[[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]],[[0.166666667,0.942809042,0.288675135],[-0.471404521,0.333333333,-0.816496581],[-0.866025404,0.0,0.5]],[[0.166666667,-0.471404521,-0.866025404],[0.942809042,0.333333333,0.0],[0.288675135,-0.816496581,0.5]],[[0.166666667,0.942809042,-0.288675135],[-0.471404521,0.333333333,0.816496581],[0.866025404,-0.0,0.5]],[[0.166666667,-0.471404521,0.866025404],[0.942809042,0.333333333,0.0],[-0.288675135,0.816496581,0.5]],[[0.666666667,-0.471404521,0.577350269],[-0.471404521,0.333333333,0.816496581],[-0.577350269,-0.816496581,0.0]],[[0.666666667,-0.471404521,-0.577350269],[-0.471404521,0.333333333,-0.816496581],[0.577350269,0.816496581,0.0]],[[-0.5,0.0,0.866025404],[0.0,1.0,0.0],[-0.866025404,0.0,-0.5]],[[0.833333333,0.471404521,-0.288675135],[0.471404521,-0.333333333,0.816496581],[0.288675135,-0.816496581,-0.5]],[[-0.5,0.0,-0.866025404],[0.0,1.0,0.0],[0.866025404,0.0,-0.5]],[[0.833333333,0.471404521,0.288675135],[0.471404521,-0.333333333,-0.816496581],[-0.288675135,0.816496581,-0.5]],[[-0.333333333,0.942809042,0.0],[0.942809042,0.333333333,0.0],[-0.0,0.0,-1.0]]],"rings":[{"tilt":0.0,"turns":[0.0]},{"tilt":60.0,"turns":[0.0,109.47,180.0,289.47]},{"tilt":90.0,"turns":[54.74,234.74]},{"tilt":120.0,"turns":[0.0,109.47,180.0,289.47]},{"tilt":180.0,"turns":[0.0]}]},{"name":"icosahedron","family":"icosahedral","dual":"dodecahedron","n":12,"k":5,"rotations":60,"nn":63.43,"nnCount":5,"opposite":true,"territory":"regular pentagon","puzzle":"Megaminx faces","grams":51,"dirs":[[0.0,0.0,-1.0],[0.894427191,0.0,-0.447213595],[0.276393202,0.850650808,-0.447213595],[-0.723606798,0.525731112,-0.447213595],[-0.723606798,-0.525731112,-0.447213595],[0.276393202,-0.850650808,-0.447213595],[0.723606798,0.525731112,0.447213595],[-0.276393202,0.850650808,0.447213595],[-0.894427191,0.0,0.447213595],[-0.276393202,-0.850650808,0.447213595],[0.723606798,-0.525731112,0.447213595],[0.0,0.0,1.0]],"hold":[[[1.0,0.0,0.0],[0.0,1.0,0.0],[-0.0,0.0,1.0]],[[0.361803399,-0.587785252,0.723606798],[0.262865556,0.809016994,0.525731112],[-0.894427191,0.0,0.447213595]],[[0.670820393,0.162459848,0.723606798],[-0.68819096,0.5,0.525731112],[-0.276393202,-0.850650808,0.447213595]],[[0.361803399,-0.262865556,-0.894427191],[0.587785252,0.809016994,0.0],[0.723606798,-0.525731112,0.447213595]],[[0.670820393,-0.68819096,-0.276393202],[0.162459848,0.5,-0.850650808],[0.723606798,0.525731112,0.447213595]],[[0.670820393,-0.162459848,0.723606798],[0.68819096,0.5,-0.525731112],[-0.276393202,0.850650808,0.447213595]],[[-0.361803399,-0.262865556,0.894427191],[-0.587785252,0.809016994,0.0],[-0.723606798,-0.525731112,-0.447213595]],[[0.447213595,0.525731112,-0.723606798],[0.850650808,-0.0,0.525731112],[0.276393202,-0.850650808,-0.447213595]],[[-0.361803399,-0.587785252,-0.723606798],[-0.262865556,0.809016994,-0.525731112],[0.894427191,0.0,-0.447213595]],[[0.947213595,-0.162459848,0.276393202],[0.162459848,-0.5,-0.850650808],[0.276393202,0.850650808,-0.447213595]],[[-0.361803399,0.262865556,0.894427191],[0.587785252,0.809016994,0.0],[-0.723606798,0.525731112,-0.447213595]],[[0.809016994,0.587785252,0.0],[0.587785252,-0.809016994,0.0],[-0.0,0.0,-1.0]]],"rings":[{"tilt":0.0,"turns":[0.0]},{"tilt":63.43,"turns":[0.0,72.0,144.0,216.0,288.0]},{"tilt":116.57,"turns":[36.0,108.0,180.0,252.0,324.0]},{"tilt":180.0,"turns":[0.0]}]},{"name":"dodecahedron","family":"icosahedral","dual":"icosahedron","n":20,"k":3,"rotations":60,"nn":41.81,"nnCount":3,"opposite":true,"territory":"equilateral triangle","puzzle":"corner-turning dodecahedra","grams":61,"dirs":[[0.0,0.0,-1.0],[0.666666667,0.0,-0.745355992],[-0.333333333,0.577350269,-0.745355992],[-0.333333333,-0.577350269,-0.745355992],[0.745355992,0.577350269,-0.333333333],[0.127322004,0.934172359,-0.333333333],[-0.872677996,0.35682209,-0.333333333],[-0.872677996,-0.35682209,-0.333333333],[0.127322004,-0.934172359,-0.333333333],[0.745355992,-0.577350269,-0.333333333],[0.872677996,0.35682209,0.333333333],[-0.127322004,0.934172359,0.333333333],[-0.745355992,0.577350269,0.333333333],[-0.745355992,-0.577350269,0.333333333],[-0.127322004,-0.934172359,0.333333333],[0.872677996,-0.35682209,0.333333333],[0.333333333,0.577350269,0.745355992],[-0.666666667,0.0,0.745355992],[0.333333333,-0.577350269,0.745355992],[0.0,0.0,1.0]],"hold":[[[1.0,0.0,0.0],[0.0,1.0,0.0],[-0.0,0.0,1.0]],[[0.372677996,-0.866025404,0.333333333],[0.645497224,0.5,0.577350269],[-0.666666667,0.0,0.745355992]],[[0.372677996,-0.645497224,-0.666666667],[0.866025404,0.5,0.0],[0.333333333,-0.577350269,0.745355992]],[[0.563661002,-0.755761314,0.333333333],[0.755761314,0.309016994,-0.577350269],[0.333333333,0.577350269,0.745355992]],[[0.475683661,-0.11026409,0.872677996],[-0.467086179,0.809016994,0.35682209],[-0.745355992,-0.577350269,0.333333333]],[[0.975683661,-0.178411045,-0.127322004],[0.178411045,0.309016994,0.934172359],[-0.127322004,-0.934172359,0.333333333]],[[0.475683661,0.467086179,-0.745355992],[0.11026409,0.809016994,0.577350269],[0.872677996,-0.35682209,0.333333333]],[[0.475683661,-0.467086179,-0.745355992],[-0.11026409,0.809016994,-0.577350269],[0.872677996,0.35682209,0.333333333]],[[0.975683661,0.178411045,-0.127322004],[-0.178411045,0.309016994,-0.934172359],[-0.127322004,0.934172359,0.333333333]],[[0.475683661,0.11026409,0.872677996],[0.467086179,0.809016994,-0.35682209],[-0.745355992,0.577350269,0.333333333]],[[-0.475683661,0.467086179,0.745355992],[-0.11026409,0.809016994,-0.577350269],[-0.872677996,-0.35682209,-0.333333333]],[[0.642350328,-0.178411045,0.745355992],[-0.755761314,-0.309016994,0.577350269],[0.127322004,-0.934172359,-0.333333333]],[[-0.475683661,-0.11026409,-0.872677996],[0.467086179,0.809016994,-0.35682209],[0.745355992,-0.577350269,-0.333333333]],[[0.642350328,-0.755761314,0.127322004],[-0.178411045,-0.309016994,-0.934172359],[0.745355992,0.577350269,-0.333333333]],[[0.333333333,-0.35682209,-0.872677996],[-0.934172359,0.0,-0.35682209],[0.127322004,0.934172359,-0.333333333]],[[0.333333333,0.934172359,0.127322004],[0.35682209,-0.0,-0.934172359],[-0.872677996,0.35682209,-0.333333333]],[[-0.372677996,-0.645497224,0.666666667],[-0.866025404,0.5,0.0],[-0.333333333,-0.577350269,-0.745355992]],[[-0.372677996,-0.866025404,-0.333333333],[-0.645497224,0.5,-0.577350269],[0.666666667,0.0,-0.745355992]],[[-0.372677996,0.645497224,0.666666667],[0.866025404,0.5,0.0],[-0.333333333,0.577350269,-0.745355992]],[[0.5,0.866025404,0.0],[0.866025404,-0.5,0.0],[-0.0,0.0,-1.0]]],"rings":[{"tilt":0.0,"turns":[0.0]},{"tilt":41.81,"turns":[0.0,120.0,240.0]},{"tilt":70.53,"turns":[37.76,82.24,157.76,202.24,277.76,322.24]},{"tilt":109.47,"turns":[22.24,97.76,142.24,217.76,262.24,337.76]},{"tilt":138.19,"turns":[60.0,180.0,300.0]},{"tilt":180.0,"turns":[0.0]}]},{"name":"icosidodecahedron","family":"icosahedral","dual":"rhombic triacontahedron","n":30,"k":2,"rotations":60,"nn":36.0,"nnCount":4,"opposite":true,"territory":"rhombus","puzzle":"edge-turning dodecahedra","grams":74,"dirs":[[0.0,0.0,-1.0],[0.587785252,0.0,-0.809016994],[-0.262865556,0.525731112,-0.809016994],[-0.587785252,0.0,-0.809016994],[0.262865556,-0.525731112,-0.809016994],[0.68819096,0.525731112,-0.5],[0.162459848,0.850650808,-0.5],[-0.68819096,-0.525731112,-0.5],[-0.162459848,-0.850650808,-0.5],[0.951056516,0.0,-0.309016994],[-0.425325404,0.850650808,-0.309016994],[-0.951056516,0.0,-0.309016994],[0.425325404,-0.850650808,-0.309016994],[0.525731112,0.850650808,0.0],[-0.850650808,0.525731112,0.0],[-0.525731112,-0.850650808,0.0],[0.850650808,-0.525731112,0.0],[0.951056516,0.0,0.309016994],[-0.425325404,0.850650808,0.309016994],[-0.951056516,0.0,0.309016994],[0.425325404,-0.850650808,0.309016994],[0.68819096,0.525731112,0.5],[0.162459848,0.850650808,0.5],[-0.68819096,-0.525731112,0.5],[-0.162459848,-0.850650808,0.5],[0.587785252,0.0,0.809016994],[-0.262865556,0.525731112,0.809016994],[-0.587785252,0.0,0.809016994],[0.262865556,-0.525731112,0.809016994],[0.0,0.0,1.0]],"hold":[[[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]],[[0.361803399,0.894427191,0.262865556],[-0.723606798,0.447213595,-0.525731112],[-0.587785252,0.0,0.809016994]],[[0.361803399,-0.723606798,-0.587785252],[0.894427191,0.447213595,0.0],[0.262865556,-0.525731112,0.809016994]],[[0.361803399,0.894427191,-0.262865556],[-0.723606798,0.447213595,0.525731112],[0.587785252,0.0,0.809016994]],[[0.361803399,-0.723606798,0.587785252],[0.894427191,0.447213595,0.0],[-0.262865556,0.525731112,0.809016994]],[[0.670820393,-0.723606798,0.162459848],[0.276393202,0.447213595,0.850650808],[-0.68819096,-0.525731112,0.5]],[[0.670820393,0.276393202,0.68819096],[-0.723606798,0.447213595,0.525731112],[-0.162459848,-0.850650808,0.5]],[[0.670820393,-0.723606798,-0.162459848],[0.276393202,0.447213595,-0.850650808],[0.68819096,0.525731112,0.5]],[[0.670820393,0.276393202,-0.68819096],[-0.723606798,0.447213595,-0.525731112],[0.162459848,0.850650808,0.5]],[[0.309016994,0.0,0.951056516],[0.0,1.0,0.0],[-0.951056516,0.0,0.309016994]],[[0.861803399,0.276393202,-0.425325404],[0.276393202,0.447213595,0.850650808],[0.425325404,-0.850650808,0.309016994]],[[0.309016994,0.0,-0.951056516],[0.0,1.0,0.0],[0.951056516,0.0,0.309016994]],[[0.861803399,0.276393202,0.425325404],[0.276393202,0.447213595,-0.850650808],[-0.425325404,0.850650808,0.309016994]],[[-0.447213595,0.276393202,0.850650808],[-0.723606798,0.447213595,-0.525731112],[-0.525731112,-0.850650808,0.0]],[[-0.447213595,-0.723606798,-0.525731112],[0.276393202,0.447213595,-0.850650808],[0.850650808,-0.525731112,0.0]],[[0.447213595,-0.276393202,0.850650808],[0.723606798,-0.447213595,-0.525731112],[0.525731112,0.850650808,0.0]],[[0.447213595,0.723606798,-0.525731112],[-0.276393202,-0.447213595,-0.850650808],[-0.850650808,0.525731112,0.0]],[[-0.138196601,0.894427191,0.425325404],[0.276393202,0.447213595,-0.850650808],[-0.951056516,0.0,-0.309016994]],[[-0.138196601,0.276393202,-0.951056516],[0.894427191,0.447213595,0.0],[0.425325404,-0.850650808,-0.309016994]],[[-0.138196601,0.894427191,-0.425325404],[0.276393202,0.447213595,0.850650808],[0.951056516,-0.0,-0.309016994]],[[-0.138196601,0.276393202,0.951056516],[0.894427191,0.447213595,0.0],[-0.425325404,0.850650808,-0.309016994]],[[0.052786405,-0.723606798,0.68819096],[-0.723606798,0.447213595,0.525731112],[-0.68819096,-0.525731112,-0.5]],[[0.947213595,-0.276393202,0.162459848],[-0.276393202,-0.447213595,0.850650808],[-0.162459848,-0.850650808,-0.5]],[[0.052786405,-0.723606798,-0.68819096],[-0.723606798,0.447213595,-0.525731112],[0.68819096,0.525731112,-0.5]],[[0.947213595,-0.276393202,-0.162459848],[-0.276393202,-0.447213595,-0.850650808],[0.162459848,0.850650808,-0.5]],[[-0.809016994,0.0,0.587785252],[0.0,1.0,0.0],[-0.587785252,0.0,-0.809016994]],[[0.638196601,0.723606798,-0.262865556],[0.723606798,-0.447213595,0.525731112],[0.262865556,-0.525731112,-0.809016994]],[[-0.809016994,0.0,-0.587785252],[0.0,1.0,0.0],[0.587785252,0.0,-0.809016994]],[[0.638196601,0.723606798,0.262865556],[0.723606798,-0.447213595,-0.525731112],[-0.262865556,0.525731112,-0.809016994]],[[-0.447213595,0.894427191,0.0],[0.894427191,0.447213595,0.0],[-0.0,0.0,-1.0]]],"rings":[{"tilt":0.0,"turns":[0.0]},{"tilt":36.0,"turns":[0.0,116.57,180.0,296.57]},{"tilt":60.0,"turns":[37.38,79.19,217.38,259.19]},{"tilt":72.0,"turns":[0.0,116.57,180.0,296.57]},{"tilt":90.0,"turns":[58.28,148.28,238.28,328.28]},{"tilt":108.0,"turns":[0.0,116.57,180.0,296.57]},{"tilt":120.0,"turns":[37.38,79.19,217.38,259.19]},{"tilt":144.0,"turns":[0.0,116.57,180.0,296.57]},{"tilt":180.0,"turns":[0.0]}]}];
+const LABEL = { tetrahedron: "Tetrahedron", octahedron: "Octahedron", cube: "Cube", cuboctahedron: "Cuboctahedron",
+  icosahedron: "Icosahedron", dodecahedron: "Dodecahedron", icosidodecahedron: "Icosidodecahedron" };
+const SHY = { tetrahedron: "Tetra&shy;hedron", octahedron: "Octa&shy;hedron", cube: "Cube", cuboctahedron: "Cub&shy;octa&shy;hedron",
+  icosahedron: "Icosa&shy;hedron", dodecahedron: "Dodeca&shy;hedron", icosidodecahedron: "Icosi&shy;dodeca&shy;hedron" };
+const FRAC = { 2: "½", 3: "⅓", 4: "¼", 5: "⅕" };
+const FAM = { tetrahedral: "Tetrahedral", octahedral: "Octahedral", icosahedral: "Icosahedral" };
+const CORE_R = 10, REACH = 30, TIP_R = 2.5, ROD_D = 2.5;
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- small linear algebra ---------- */
+const mul = (A, B) => A.map((r, i) => [0, 1, 2].map(j => r[0] * B[0][j] + r[1] * B[1][j] + r[2] * B[2][j]));
+const T = A => [0, 1, 2].map(i => [A[0][i], A[1][i], A[2][i]]);
+const apply = (A, v) => [A[0][0] * v[0] + A[0][1] * v[1] + A[0][2] * v[2], A[1][0] * v[0] + A[1][1] * v[1] + A[1][2] * v[2], A[2][0] * v[0] + A[2][1] * v[1] + A[2][2] * v[2]];
+const I3 = () => [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+function axisAngle(a, t) {
+  const n = Math.hypot(a[0], a[1], a[2]) || 1, x = a[0] / n, y = a[1] / n, z = a[2] / n, c = Math.cos(t), s = Math.sin(t), C = 1 - c;
+  return [[c + x * x * C, x * y * C - z * s, x * z * C + y * s], [y * x * C + z * s, c + y * y * C, y * z * C - x * s], [z * x * C - y * s, z * y * C + x * s, c + z * z * C]];
+}
+function toAxisAngle(R) {
+  const ang = Math.acos(Math.max(-1, Math.min(1, (R[0][0] + R[1][1] + R[2][2] - 1) / 2)));
+  if (ang < 1e-9) return [[0, 0, 1], 0];
+  if (Math.PI - ang < 1e-6) { // half turn: axis from the diagonal
+    const d = [0, 1, 2].map(i => Math.sqrt(Math.max(0, (R[i][i] + 1) / 2)));
+    const i = d.indexOf(Math.max(...d)); const a = [0, 0, 0]; a[i] = d[i];
+    for (let j = 0; j < 3; j++) if (j !== i) a[j] = R[i][j] / (2 * d[i]);
+    return [a, ang];
+  }
+  return [[R[2][1] - R[1][2], R[0][2] - R[2][0], R[1][0] - R[0][1]], ang];
+}
+const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+/* ---------- drawing ---------- */
+const BRASS = { hi: [255, 243, 206], mid: [224, 178, 88], lo: [150, 104, 32], edge: [80, 53, 14] };
+const ENAMEL = { hi: [222, 238, 252], mid: [82, 136, 188], lo: [36, 74, 116], edge: [15, 33, 56] };
+const col = (c, f) => `rgb(${Math.round(c[0] * f)},${Math.round(c[1] * f)},${Math.round(c[2] * f)})`;
+function hexRGB(h) { h = h.trim().replace("#", ""); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); }
+const standPal = (hi, lo) => ({ hi, lo, mid: hi.map((v, i) => (v + lo[i]) / 2), edge: lo.map(v => v * 0.7) });
+let STAND = standPal([167, 177, 187], [59, 69, 80]);
+function readTheme() {
+  const cs = getComputedStyle(document.documentElement);
+  try { STAND = standPal(hexRGB(cs.getPropertyValue("--stand-hi")), hexRGB(cs.getPropertyValue("--stand-lo"))); } catch (e) {}
+}
+
+function sphere(ctx, x, y, r, pal, f) {
+  const g = ctx.createRadialGradient(x - r * 0.36, y - r * 0.42, r * 0.04, x, y, r);
+  g.addColorStop(0, col(pal.hi, f)); g.addColorStop(0.28, col(pal.mid, f)); g.addColorStop(0.78, col(pal.lo, f)); g.addColorStop(1, col(pal.edge, f));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+}
+function rod(ctx, a, b, w, pal, f) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy);
+  if (L < 0.5) return;
+  let nx = -dy / L, ny = dx / L;
+  if (nx * -0.6 + ny * -0.8 < 0) { nx = -nx; ny = -ny; } // n points toward the light (upper left)
+  const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+  const g = ctx.createLinearGradient(mx + nx * w / 2, my + ny * w / 2, mx - nx * w / 2, my - ny * w / 2);
+  g.addColorStop(0, col(pal.mid, f)); g.addColorStop(0.3, col(pal.hi, f)); g.addColorStop(0.72, col(pal.lo, f)); g.addColorStop(1, col(pal.edge, f));
+  ctx.strokeStyle = g; ctx.lineWidth = w; ctx.lineCap = "butt";
+  ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+}
+
+function makeCamera(W, H, az, el, targetZ, k) {
+  const ca = Math.cos(az), sa = Math.sin(az), ce = Math.cos(el), se = Math.sin(el), D = 320;
+  return p => {
+    const x1 = ca * p[0] + sa * p[1], y1 = -sa * p[0] + ca * p[1], z1 = p[2] - targetZ;
+    const xs = -x1, ys = z1 * ce - y1 * se, zs = z1 * se + y1 * ce;
+    const s = k * D / (D - zs);
+    return [W / 2 + xs * s, H / 2 - ys * s, zs, s];
+  };
+}
+const depthShade = z => 0.7 + 0.3 * Math.max(0, Math.min(1, (z + 30) / 60));
+
+function drawBall(ctx, W, H, ball, M, view, opts) {
+  const cam = makeCamera(W, H, view.az, view.el, opts.targetZ, opts.k);
+  const lift = opts.lift || 0;
+  ctx.clearRect(0, 0, W, H);
+  const items = [];
+  if (opts.stand) {
+    const baseTop = -REACH - TIP_R - 20, baseH = 5, R = 15;
+    const ringTop = [], ringBot = [];
+    for (let i = 0; i < 64; i++) { const t = i / 64 * Math.PI * 2; ringTop.push(cam([R * Math.cos(t), R * Math.sin(t), baseTop])); ringBot.push(cam([R * Math.cos(t), R * Math.sin(t), baseTop - baseH])); }
+    // puck: side silhouette, then the top face
+    ctx.fillStyle = col(STAND.lo, 1);
+    ctx.beginPath(); ringBot.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fill();
+    for (let i = 0; i < 64; i++) { const a = ringTop[i], b = ringBot[i], c = ringBot[(i + 1) % 64], d = ringTop[(i + 1) % 64]; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(c[0], c[1]); ctx.lineTo(d[0], d[1]); ctx.closePath(); ctx.fill(); ctx.strokeStyle = col(STAND.lo, 1); ctx.lineWidth = 1; ctx.stroke(); }
+    const c0 = cam([0, 0, baseTop]);
+    const g = ctx.createLinearGradient(c0[0] - R * c0[3], c0[1] - R * c0[3] * 0.3, c0[0] + R * c0[3], c0[1] + R * c0[3] * 0.3);
+    g.addColorStop(0, col(STAND.hi, 1.05)); g.addColorStop(1, col(STAND.hi, 0.72));
+    ctx.fillStyle = g; ctx.beginPath(); ringTop.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fill();
+    const a = cam([0, 0, baseTop]), b = cam([0, 0, -REACH - TIP_R + 0.6]);
+    items.push({ z: (a[2] + b[2]) / 2 - 1, draw: () => rod(ctx, a, b, 3 * (a[3] + b[3]) / 2, STAND, 1) });
+  }
+  const c = cam([0, 0, lift]);
+  items.push({ z: c[2], draw: () => sphere(ctx, c[0], c[1], CORE_R * c[3], BRASS, 0.97) });
+  ball.dirs.forEach((d, i) => {
+    const w = apply(M, d);
+    const a = cam([w[0] * (CORE_R - 0.6), w[1] * (CORE_R - 0.6), w[2] * (CORE_R - 0.6) + lift]);
+    const b = cam([w[0] * REACH, w[1] * REACH, w[2] * REACH + lift]);
+    const pal = i === opts.marked ? ENAMEL : BRASS;
+    items.push({ z: b[2], draw: () => {
+      const f = depthShade(b[2]);
+      rod(ctx, a, b, ROD_D * (a[3] + b[3]) / 2, BRASS, f);
+      sphere(ctx, b[0], b[1], TIP_R * b[3], pal, f);
+    } });
+  });
+  items.sort((p, q) => p.z - q.z).forEach(it => it.draw());
+}
+
+/* ---------- state ---------- */
+const stage = document.getElementById("stage"), box = document.getElementById("stageBox");
+let cur = 0, M = I3(), held = 0, marked = 1, view = { az: 0.55, el: 0.36 };
+let anim = null, orbit = !reduceMotion, lastT = 0;
+
+function pickMarked(ball) {
+  // the spike nearest the viewer's upper front, so the blue tip starts in plain sight
+  const cam = makeCamera(1, 1, view.az, view.el, 0, 1);
+  let best = 1, bv = -1e9;
+  ball.dirs.forEach((d, i) => { if (i === held) return; const p = cam(apply(M, [d[0] * 30, d[1] * 30, d[2] * 30])); const v = p[2] - p[1] * 40; if (v > bv) { bv = v; best = i; } });
+  return best;
+}
+
+function sizeCanvas(cv) {
+  const r = cv.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  return [w, h];
+}
+
+function render() {
+  const [W, H] = sizeCanvas(stage);
+  const ctx = stage.getContext("2d");
+  let Mnow = M, lift = 0;
+  if (anim) {
+    const t = ease(Math.min(1, anim.t));
+    Mnow = mul(axisAngle(anim.axis, anim.angle * t), anim.M0);
+    if (anim.lift) lift = Math.sin(Math.PI * Math.min(1, anim.t)) * 14;
+  }
+  const k = Math.min(H / 112, W / 80);
+  drawBall(ctx, W, H, BALLS[cur], Mnow, view, { stand: true, targetZ: -11, k, lift, marked });
+}
+
+function tick(ts) {
+  const dt = lastT ? Math.min(0.05, (ts - lastT) / 1000) : 0; lastT = ts;
+  if (orbit) view.az += dt * 0.18;
+  if (anim) {
+    anim.t += dt / anim.dur;
+    if (anim.t >= 1) { M = anim.M1; const done = anim.done; anim = null; done && done(); }
+  }
+  render();
+  requestAnimationFrame(tick);
+}
+
+/* ---------- actions ---------- */
+const statusEl = document.getElementById("status");
+function stopOrbit() { orbit = false; }
+function twirl() {
+  if (anim) return; stopOrbit();
+  const b = BALLS[cur], ang = 2 * Math.PI / b.k;
+  const M1 = mul(axisAngle([0, 0, 1], ang), M);
+  anim = { t: 0, dur: reduceMotion ? 0.001 : 0.9, axis: [0, 0, 1], angle: ang, M0: M, M1, done: () => {
+    statusEl.innerHTML = `<span class="dot"></span>Turned ${FRAC[b.k]} around the spike in the stand. The blue tip moved to another spike, and the ball matches itself.`;
+  } };
+}
+function rehold() {
+  if (anim) return; stopOrbit();
+  const b = BALLS[cur];
+  let j = held; while (j === held) j = Math.floor(Math.random() * b.n);
+  const g = mul(T(b.hold[held]), b.hold[j]);   // a symmetry taking spike j to the held spike
+  const M1 = mul(M, g);
+  const [axis, angle] = toAxisAngle(mul(M1, T(M)));
+  anim = { t: 0, dur: reduceMotion ? 0.001 : 1.3, axis, angle, M0: M, M1, lift: true, done: () => {
+    held = j;
+    statusEl.innerHTML = j === marked
+      ? `<span class="dot"></span>Now held by the blue-tipped spike, spike ${j + 1} of ${b.n}. Everything else looks exactly as before.`
+      : `<span class="dot"></span>Now held by spike ${j + 1} of ${b.n}. The blue tip ended up somewhere new, and the ball looks exactly as before.`;
+  } };
+}
+document.getElementById("twirl").addEventListener("click", twirl);
+document.getElementById("rehold").addEventListener("click", rehold);
+
+/* drag to orbit the camera */
+let drag = null;
+box.addEventListener("pointerdown", e => { drag = { x: e.clientX, y: e.clientY }; stopOrbit(); box.setPointerCapture(e.pointerId); });
+box.addEventListener("pointermove", e => {
+  if (!drag) return;
+  view.az -= (e.clientX - drag.x) * 0.009;
+  view.el = Math.max(0.02, Math.min(1.35, view.el + (e.clientY - drag.y) * 0.009));
+  drag = { x: e.clientX, y: e.clientY };
+});
+const endDrag = () => { drag = null; };
+box.addEventListener("pointerup", endDrag); box.addEventListener("pointercancel", endDrag);
+
+/* ---------- page content ---------- */
+const fmt = x => (Math.round(x * 100) / 100).toString();
+function select(i, fromLoad) {
+  cur = i; M = I3(); held = 0; anim = null;
+  const b = BALLS[i];
+  marked = pickMarked(b);
+  document.querySelectorAll("button.pick").forEach((el, j) => el.setAttribute("aria-pressed", String(j === i)));
+  document.getElementById("fam").textContent = `${FAM[b.family]} family · ${b.rotations} rotations`;
+  document.getElementById("name").textContent = LABEL[b.name];
+  document.getElementById("count").textContent = `${b.n} spikes`;
+  document.getElementById("twirl").textContent = `Twirl ${FRAC[b.k]} turn`;
+  statusEl.innerHTML = `<span class="dot"></span>One tip is enamelled blue so you can follow it. Try both tests: the blue tip moves, the ball doesn't change.`;
+  const facts = [
+    ["Twirl test", `Matches itself every ${FRAC[b.k]} turn`],
+    ["Nearest spikes", `${b.nnCount} at <span class="num">${fmt(b.nn)}°</span>`],
+    ["Opposite spike", b.opposite ? "Yes, spikes come in straight-through pairs" : "No, each spike points at the middle of a gap"],
+    ["Each spike's territory", `A spherical ${b.territory}`],
+    ["Shaved version", `${LABEL[b.dual] || b.dual[0].toUpperCase() + b.dual.slice(1)}, one flat face per spike`],
+    ["Rotations", `<span class="num">${b.rotations} = ${b.n} × ${b.k}</span>`],
+    ["Twists like", b.puzzle],
+    ["In brass", `About ${b.grams} g`],
+  ];
+  document.getElementById("facts").innerHTML = facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+  document.getElementById("drillName").textContent = LABEL[b.name].toLowerCase();
+  let h = 1;
+  document.getElementById("drill").innerHTML = b.rings.map(r => {
+    const n = r.turns.length, holes = n === 1 ? `${h}` : `${h}–${h + n - 1}`; h += n;
+    const turns = (r.tilt < 0.01 || r.tilt > 179.99) ? "—" : r.turns.map(t => `${fmt(t)}°`).join(", ");
+    return `<tr><td>${holes}</td><td>${fmt(r.tilt)}°</td><td class="turns">${turns}</td></tr>`;
+  }).join("");
+  if (!fromLoad) { try { history.replaceState(null, "", "#" + b.name); } catch (e) {} }
+}
+
+const total = BALLS.reduce((s, b) => s + b.grams, 0);
+document.getElementById("spec").innerHTML = [
+  ["Core", "20 mm brass ball, turned from free-machining brass rod"],
+  ["Holes", "2.5 mm, 4 mm deep, reamed for a press fit"],
+  ["Spikes", "2.5 mm brass rod, 17.5 mm showing between core and tip"],
+  ["Tips", "5 mm balls, centred 30 mm from the middle"],
+  ["Across", "65 mm, tip to tip"],
+  ["Weight", `41 to 74 g each, about ${total} g for the set`],
+  ["Tightest fit", "Icosidodecahedron: holes 36° apart leave about 1.2 mm of brass between hole bottoms"],
+].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+
+/* the set, 1 - 3 - 3 */
+const fams = document.getElementById("families");
+const thumbs = [];
+["tetrahedral", "octahedral", "icosahedral"].forEach(fam => {
+  const g = document.createElement("div"); g.className = "family";
+  const rot = BALLS.find(b => b.family === fam).rotations;
+  g.innerHTML = `<div class="fam-label"><span>${FAM[fam]}</span><span>${rot} rotations</span></div><div class="items"></div>`;
+  const items = g.querySelector(".items");
+  BALLS.forEach((b, i) => {
+    if (b.family !== fam) return;
+    const btn = document.createElement("button"); btn.className = "pick"; btn.type = "button";
+    btn.setAttribute("aria-label", `${LABEL[b.name]}, ${b.n} spikes`);
+    btn.innerHTML = `<canvas></canvas><span class="pn">${SHY[b.name]}</span><span class="pc">${b.n} spikes</span>`;
+    btn.addEventListener("click", () => { select(i); });
+    items.appendChild(btn);
+    thumbs.push([btn.querySelector("canvas"), i]);
+  });
+  fams.appendChild(g);
+});
+function drawThumbs() {
+  thumbs.forEach(([cv, i]) => {
+    const [W, H] = sizeCanvas(cv);
+    drawBall(cv.getContext("2d"), W, H, BALLS[i], I3(), { az: 0.55, el: 0.36 }, { stand: false, targetZ: 0, k: Math.min(W, H) / 70, marked: -1 });
+  });
+}
+
+readTheme();
+const start = Math.max(0, BALLS.findIndex(b => "#" + b.name === location.hash));
+select(start >= 0 ? start : 0, true);
+drawThumbs();
+render();
+requestAnimationFrame(tick);
+const redrawTheme = () => { readTheme(); drawThumbs(); };
+try { window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redrawTheme); } catch (e) {}
+new MutationObserver(redrawTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+new ResizeObserver(() => drawThumbs()).observe(fams);
+</script>
+</body>
+</html>
