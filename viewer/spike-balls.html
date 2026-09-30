@@ -119,6 +119,8 @@ dl.spec dt { color: var(--muted); padding-right: 18px; }
 
 .why { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 16px 40px; border-top: 1px solid var(--rule); padding-top: 28px; }
 .why .body { display: grid; gap: 12px; max-width: 66ch; }
+.more { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 15px; border-top: 1px solid var(--rule); padding-top: 20px; }
+.more a { color: var(--ink); }
 
 @media (max-width: 860px) {
   header, .bench, .making, .why { grid-template-columns: minmax(0, 1fr); }
@@ -203,6 +205,13 @@ dl.spec dt { color: var(--muted); padding-right: 18px; }
       <p>In the tetrahedral family, two of the three kinds give tetrahedra that are turned copies of each other, and the third gives the octahedron, which already belongs to the octahedral family. That leaves 1 + 3 + 3 = 7.</p>
     </div>
   </div>
+
+  <nav class="more" aria-label="More">
+    <a href="../index.html">← The riddle</a>
+    <a href="index.html">The 7 in three forms</a>
+    <a href="kissing-flats.html">Kissing flats in 3D</a>
+    <a href="explore.html">Off-axis explorer</a>
+  </nav>
 </div>
 
 <script>

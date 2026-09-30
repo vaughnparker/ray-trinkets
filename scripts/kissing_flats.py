@@ -8,10 +8,10 @@ the vertex solid. Keep grinding and each ball turns into its face solid.
 This script:
   1. builds the 7 dot arrangements,
   2. writes one STL per ball to models/kissing-flats-<D>mm/, resting on a flat,
-  3. ray-casts the 7 into renders/kissing-flats.png.
+  3. ray-casts the 7 into images/kissing-flats.png.
 
-Run: python3 kissing_flats.py              (20 mm balls)
-     python3 kissing_flats.py --diameter 25
+Run: python3 scripts/kissing_flats.py              (20 mm balls)
+     python3 scripts/kissing_flats.py --diameter 25
 Needs numpy, matplotlib, trimesh and manifold3d.
 """
 import argparse
@@ -226,7 +226,7 @@ def write_render(path):
     fig.text(0.5, 0.958, "One round flat at each of the riddle's dots, cut until neighbouring flats just touch",
              ha="center", va="top", fontsize=14, color="#56606a")
     fig.savefig(path, facecolor=bg)
-    print(f"wrote {path}")
+    print(f"wrote {os.path.relpath(path)}")
 
 
 if __name__ == "__main__":
@@ -234,5 +234,6 @@ if __name__ == "__main__":
     ap.add_argument("--diameter", type=float, default=20.0, help="ball diameter in mm (default 20)")
     args = ap.parse_args()
     d = f"{args.diameter:g}"
-    write_models(args.diameter, os.path.join("models", f"kissing-flats-{d}mm"))
-    write_render(os.path.join("renders", "kissing-flats.png"))
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+    write_models(args.diameter, os.path.join(root, "models", f"kissing-flats-{d}mm"))
+    write_render(os.path.join(root, "images", "kissing-flats.png"))

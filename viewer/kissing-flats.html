@@ -70,9 +70,9 @@
   </div>
 </div>
 
-<script src="data.js"></script>
-<script src="three.min.js"></script>
-<script src="OrbitControls.js"></script>
+<script src="lib/data.js"></script>
+<script src="lib/three.min.js"></script>
+<script src="lib/OrbitControls.js"></script>
 <script>
 const DUAL = { tetrahedron:'tetrahedron', octahedron:'cube', cube:'octahedron',
   cuboctahedron:'rhombic dodecahedron', icosahedron:'dodecahedron', dodecahedron:'icosahedron',
@@ -113,7 +113,7 @@ const solid=new THREE.Group(); scene.add(solid);
 
 // One shader for the ball and every flat. The ball drops everything outside any plane;
 // each flat drops everything outside the other planes or outside the ball. The lighting
-// is fixed to the viewer, the same studio set-up as renders/kissing-flats.png.
+// is fixed to the viewer, the same studio set-up as images/kissing-flats.png.
 const planes=Array.from({length:MAXP}, ()=>new THREE.Vector4(0,0,1,2));
 const count={value:0};
 const VERT=`
