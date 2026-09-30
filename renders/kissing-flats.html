@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Kissing Flats</title>
+<style>
+  :root{--bg:#eeedeb;--panel:#f8f7f4;--ink:#1d242b;--muted:#56606a;--line:#d8d4cc;--brass:#8a6424;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+  #app{display:flex;height:100vh;overflow:hidden;}
+  #view{flex:1;position:relative;min-width:0;touch-action:none;}
+  #panel{width:320px;background:var(--panel);padding:18px;overflow-y:auto;border-left:1px solid var(--line);}
+  h1{font-size:16px;margin:0 0 6px;}
+  .sub{font-size:12px;color:var(--muted);margin:0 0 14px;line-height:1.5;}
+  label{font-size:12px;color:var(--muted);display:block;margin:14px 0 6px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;}
+  .row button{flex:1 1 auto;min-width:64px;padding:8px 6px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:12px;cursor:pointer;}
+  .row button.active{background:var(--brass);border-color:var(--brass);color:#fff;font-weight:600;}
+  .row button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px;}
+  input[type=range]{width:100%;accent-color:var(--brass);margin:4px 0 8px;}
+  .check{display:flex;align-items:center;gap:7px;margin-top:12px;cursor:pointer;font-size:12px;color:var(--muted);}
+  .check input{width:auto;accent-color:var(--brass);}
+  .readout{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;margin-top:16px;line-height:1.6;}
+  .big{font-size:22px;font-weight:800;line-height:1;margin-bottom:6px;}
+  .num{font-variant-numeric:tabular-nums;}
+  #stage{color:var(--brass);font-weight:600;}
+  #caption{position:absolute;left:0;right:0;bottom:0;padding:14px 20px;font-size:13px;color:var(--muted);pointer-events:none;}
+  .hint{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.5;}
+  .hint a{color:inherit;}
+  @media (max-width:720px){
+    #app{flex-direction:column;height:auto;min-height:100vh;overflow:visible;}
+    #view{flex:none;height:62vh;}
+    #panel{width:auto;border-left:0;border-top:1px solid var(--line);padding:16px;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="view"><div id="caption"></div></div>
+  <div id="panel">
+    <h1>ray-trinkets — kissing flats</h1>
+    <p class="sub">A round flat at every dot, all the same depth, cut until neighbouring
+    flats just touch. The flats are the dots, the touching points are the edges, and the
+    leftover curved patches are the faces of the vertex solid.</p>
+
+    <label>Ray-set</label>
+    <div class="row" id="shapeButtons"></div>
+
+    <label for="depth">Grind depth</label>
+    <input type="range" id="depth" min="0" max="1000" step="1">
+    <div class="row" id="stops">
+      <button data-stop="ball">Ball</button>
+      <button data-stop="kiss" class="active">Kissing</button>
+      <button data-stop="face">Face solid</button>
+    </div>
+
+    <label class="check"><input type="checkbox" id="rotate" checked> slowly rotate</label>
+
+    <div class="readout">
+      <div class="big" id="big"></div>
+      <div id="detail"></div>
+    </div>
+
+    <p class="hint">Drag to orbit, scroll to zoom. The slider grinds every flat deeper
+    at once: past the kissing point the flats merge along edges, and at the end the
+    ball is gone and only the face solid is left.</p>
+
+    <p class="hint"><a href="index.html">The 7 in all three forms →</a></p>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="three.min.js"></script>
+<script src="OrbitControls.js"></script>
+<script>
+const DUAL = { tetrahedron:'tetrahedron', octahedron:'cube', cube:'octahedron',
+  cuboctahedron:'rhombic dodecahedron', icosahedron:'dodecahedron', dodecahedron:'icosahedron',
+  icosidodecahedron:'rhombic triacontahedron' };
+const MAXP = 30, MM = 20;                       // shader plane slots; ball diameter for readouts
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+const unit=a=>{const n=Math.hypot(a[0],a[1],a[2]); return [a[0]/n,a[1]/n,a[2]/n];};
+
+// Plane depth (distance from centre, ball radius 1) at the three landmarks.
+function landmarks(rays){
+  const P=rays.map(unit);
+  let cmax=-1, nbrs=0;                          // nearest-neighbour cosine
+  P.forEach((a,i)=>P.forEach((b,j)=>{ if(i!==j) cmax=Math.max(cmax, dot(a,b)); }));
+  P.forEach((b,j)=>{ if(j>0 && Math.abs(dot(P[0],b)-cmax)<1e-4) nbrs++; });   // data.js rounds to 5 places
+  const theta=Math.acos(cmax);
+  // Deepest hole: the hull face whose corners sit furthest from its centre.
+  let cmin=1;
+  for(let i=0;i<P.length;i++) for(let j=i+1;j<P.length;j++) for(let k=j+1;k<P.length;k++){
+    let c=cross(sub(P[j],P[i]), sub(P[k],P[i])); const L=Math.hypot(...c); if(L<1e-9) continue;
+    c=[c[0]/L,c[1]/L,c[2]/L]; let d=dot(c,P[i]); if(d<0){ c=c.map(x=>-x); d=-d; }
+    if(P.every(p=>dot(c,p)<=d+1e-4)) cmin=Math.min(cmin, d);
+  }
+  return { P, theta, nbrs, kiss:Math.cos(theta/2), face:cmin };
+}
+
+// ---- scene ----
+const view=document.getElementById('view'), caption=document.getElementById('caption');
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0xeeedeb);
+const cam=new THREE.PerspectiveCamera(32, view.clientWidth/view.clientHeight, 0.01, 100);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(3, Math.max(2, devicePixelRatio)));   // supersample the flat edges
+renderer.setSize(view.clientWidth, view.clientHeight); view.appendChild(renderer.domElement);
+const controls=new THREE.OrbitControls(cam, renderer.domElement); controls.enableDamping=true;
+controls.enablePan=false; controls.minDistance=2.5; controls.maxDistance=12;
+const solid=new THREE.Group(); scene.add(solid);
+
+// One shader for the ball and every flat. The ball drops everything outside any plane;
+// each flat drops everything outside the other planes or outside the ball. The lighting
+// is fixed to the viewer, the same studio set-up as renders/kissing-flats.png.
+const planes=Array.from({length:MAXP}, ()=>new THREE.Vector4(0,0,1,2));
+const count={value:0};
+const VERT=`
+  varying vec3 vObj; varying vec3 vView; varying vec3 vN;
+  void main(){
+    vObj=position; vN=normalize(normalMatrix*normal);
+    vec4 mv=modelViewMatrix*vec4(position,1.0); vView=mv.xyz;
+    gl_Position=projectionMatrix*mv;
+  }`;
+const FRAG=`
+  uniform vec4 planes[${MAXP}]; uniform int count; uniform int selfIdx;
+  varying vec3 vObj; varying vec3 vView; varying vec3 vN;
+  void main(){
+    if(selfIdx>=0 && length(vObj)>1.0) discard;
+    for(int i=0;i<${MAXP};i++){
+      if(i>=count) break;
+      if(i==selfIdx) continue;
+      if(dot(planes[i].xyz, vObj) > planes[i].w + 1e-5) discard;
+    }
+    vec3 N=normalize(vN), V=normalize(-vView), R=reflect(-V, N);
+    vec3 key=normalize(vec3(-0.45,0.62,0.64)), fill=normalize(vec3(0.75,0.15,0.64));
+    float sky=clamp((R.y+0.6)/1.5,0.0,1.0);
+    vec3 dk=R-key; float env=0.25+0.6*sky+0.9*exp(-dot(dk,dk)/0.10);
+    float light=0.30+0.50*max(dot(N,key),0.0)+0.28*max(dot(N,fill),0.0)+0.14*max(-N.y,0.0)+0.32*env;
+    vec3 col=vec3(0.86,0.66,0.36)*light + 0.45*pow(max(dot(R,key),0.0),60.0);
+    gl_FragColor=vec4(col/(1.0+0.25*col),1.0);
+  }`;
+const mat=selfIdx=>new THREE.ShaderMaterial({vertexShader:VERT, fragmentShader:FRAG,
+  uniforms:{planes:{value:planes}, count, selfIdx:{value:selfIdx}}});
+
+const ballGeo=new THREE.SphereGeometry(1, 256, 128);
+const ball=new THREE.Mesh(ballGeo, mat(-1));
+let flats=[], cur=null, h=1;
+
+// A disk on plane i, a touch wider than the ball's circle there; the shader trims it.
+function diskGeo(n, h){
+  const seg=256, r=Math.sqrt(Math.max(0,1-h*h))*1.01+1e-4;
+  const t=Math.abs(n[2])<0.9?[0,0,1]:[1,0,0], u=unit(cross(t,n)), w=cross(n,u);
+  const pos=[h*n[0],h*n[1],h*n[2]], nor=[...n], idx=[];
+  for(let s=0;s<=seg;s++){
+    const a=s/seg*Math.PI*2, c=Math.cos(a)*r, d=Math.sin(a)*r;
+    pos.push(h*n[0]+c*u[0]+d*w[0], h*n[1]+c*u[1]+d*w[1], h*n[2]+c*u[2]+d*w[2]); nor.push(...n);
+    if(s>0) idx.push(0, s, s+1);
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(nor,3));
+  g.setIndex(idx); return g;
+}
+
+function setDepth(newH){
+  h=newH;
+  cur.L.P.forEach((n,i)=>{ planes[i].w=h; flats[i].geometry.dispose(); flats[i].geometry=diskGeo(n,h); });
+  updateReadout();
+}
+
+function select(set){
+  cur={set, L:landmarks(set.rays)};
+  flats.forEach(f=>{ solid.remove(f); f.geometry.dispose(); f.material.dispose(); });
+  solid.remove(ball); solid.add(ball);
+  count.value=cur.L.P.length;
+  planes.forEach((p,i)=>{ const n=cur.L.P[i]; if(n) p.set(n[0],n[1],n[2],1); else p.set(0,0,1,2); });
+  flats=cur.L.P.map((n,i)=>{ const m=new THREE.Mesh(diskGeo(n,1), mat(i)); solid.add(m); return m; });
+  document.querySelectorAll('#shapeButtons button').forEach(b=>b.classList.toggle('active', b.set===set));
+  goTo(stopDepth('kiss'));
+}
+
+// Slider: 0 = untouched ball, 1000 = face solid; snaps onto the kissing depth.
+const slider=document.getElementById('depth');
+const toSlider=x=>Math.round((1-x)/(1-cur.L.face)*1000);
+const fromSlider=v=>1-(v/1000)*(1-cur.L.face);
+const stopDepth=s=>s==='ball'?1-1e-4:s==='kiss'?cur.L.kiss:cur.L.face;
+function goTo(x){ slider.value=toSlider(x); setDepth(x); }
+slider.addEventListener('input',()=>{
+  const v=+slider.value, k=toSlider(cur.L.kiss);
+  setDepth(Math.abs(v-k)<=8 ? cur.L.kiss : Math.max(cur.L.face, Math.min(1-1e-4, fromSlider(v))));
+});
+document.querySelectorAll('#stops button').forEach(b=>b.addEventListener('click',()=>goTo(stopDepth(b.dataset.stop))));
+
+function updateReadout(){
+  const {set, L}=cur, n=set.rays.length, r=MM/2;
+  const stage = Math.abs(h-L.kiss)<1e-9 ? 'kissing' : h>L.kiss ? 'ball' : Math.abs(h-L.face)<1e-9 ? 'face' : 'merged';
+  document.querySelectorAll('#stops button').forEach(b=>b.classList.toggle('active', b.dataset.stop===stage));
+  const stageText = {
+    ball: h>1-1e-3 ? 'Untouched ball' : 'Flats not touching yet',
+    kissing: 'Kissing: neighbouring flats just touch',
+    merged: 'Past kissing: flats meet along edges',
+    face: `Face solid: the ${DUAL[set.name]}`,
+  }[stage];
+  document.getElementById('big').textContent=`${set.shape} · ${n} — ${set.name}`;
+  document.getElementById('detail').innerHTML=
+    `${n} flats, each touching ${L.nbrs}<br>`+
+    `At ${MM} mm, kissing flats are <span class="num">${(2*r*Math.sin(L.theta/2)).toFixed(1)} mm</span> wide `+
+    `and <span class="num">${(r*(1-L.kiss)).toFixed(2)} mm</span> deep<br>`+
+    `Now <span class="num">${(r*(1-h)).toFixed(2)} mm</span> deep · <span id="stage">${stageText}</span><br>`+
+    `Ground all the way: ${DUAL[set.name]}`;
+  caption.textContent=stageText;
+}
+
+// ray-set buttons, same labels as index.html
+const bar=document.getElementById('shapeButtons');
+RAYSETS.forEach(s=>{ const b=document.createElement('button'); b.textContent=`${s.shape} · ${s.size}`;
+  b.title=s.name; b.set=s; b.addEventListener('click',()=>select(s)); bar.appendChild(b); });
+
+const d=1.55/Math.sin(THREE.MathUtils.degToRad(cam.fov/2));
+cam.position.copy(new THREE.Vector3(0.9,0.75,1.2).normalize().multiplyScalar(d));
+cam.lookAt(0,0,0); controls.update();
+select(RAYSETS.find(s=>s.name==='icosahedron'));
+
+const rotateBox=document.getElementById('rotate');
+if(matchMedia('(prefers-reduced-motion: reduce)').matches) rotateBox.checked=false;
+function onResize(){ cam.aspect=view.clientWidth/view.clientHeight; cam.updateProjectionMatrix();
+  renderer.setSize(view.clientWidth, view.clientHeight); }
+new ResizeObserver(onResize).observe(view);
+(function loop(){ requestAnimationFrame(loop);
+  if(rotateBox.checked) solid.rotation.y+=0.003;
+  controls.update(); renderer.render(scene, cam); })();
+</script>
+</body>
+</html>
