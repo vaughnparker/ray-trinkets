@@ -55,6 +55,8 @@ alike.
 - `renders/seven-spike-balls.html`: the 7 as spike balls on a stand, with buttons
   that act out the riddle (twirl about the held spike, or hold it by another spike),
   facts for each ball, and drilling angles.
+- `renders/kissing-flats.html`: spin the 7 kissing-flats balls in 3D, with a grind-depth
+  slider that runs from the plain ball through the kissing point to the face solid.
 - `kissing_flats.py`: writes the kissing-flats models to `models/kissing-flats-20mm/`
   (one STL per ball, in millimetres, resting on a flat) and renders
   `renders/kissing-flats.png`.
