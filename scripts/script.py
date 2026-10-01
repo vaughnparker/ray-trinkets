@@ -11,13 +11,14 @@ This script:
   3. shows the naive 9 candidates (3 groups x 3 families) collapse to 7 by
      proving -- with an explicit rotation, not just matching counts --
      that two of T's three families are redundant,
-  4. writes data.js for the HTML renders.
+  4. writes viewer/lib/data.js for the HTML viewers.
 
-Run: python3 script.py
+Run: python3 scripts/script.py
 """
 from collections import namedtuple
 from itertools import combinations
 import json
+import os
 import numpy as np
 from scipy.spatial import ConvexHull, HalfspaceIntersection
 
@@ -231,12 +232,12 @@ def main():
         })
 
     export.sort(key=lambda e: e["size"])
-    out_path = "renders/data.js"
+    out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "viewer", "lib", "data.js")
     with open(out_path, "w") as fh:
         fh.write("const RAYSETS = ")
         json.dump(export, fh, indent=2)
         fh.write(";\n")
-    print(f"\nwrote {out_path}")
+    print(f"\nwrote {os.path.relpath(out_path)}")
 
 
 if __name__ == "__main__":

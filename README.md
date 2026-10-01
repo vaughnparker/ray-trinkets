@@ -45,37 +45,47 @@ alike.
 
 ## What's here
 
+Live site: <https://vaughnparker.github.io/ray-trinkets/>. The home page poses the
+riddle without giving the answer away; everything under `viewer/` shows it.
+
+- [`index.html`](index.html): the riddle, a test bench that checks any candidate
+  against the rules and says why it fails, hints one at a time, and a button that
+  reveals the answer.
 - [`riddle.md`](riddle.md): the math. How the riddle was narrowed to exactly 7,
   equivalent wordings, wordings that fail, and a face version of the riddle.
-- `script.py`: builds T, O and I from scratch, finds the 9 candidate arrangements,
-  confirms they reduce to 7, and writes `renders/data.js`.
-- `renders/index.html`: interactive 3D viewer for the 7, in all three forms.
-- `renders/generic.html`: sliders for the arrangements the pivot rule excludes, with
-  jumps to the Archimedean solids.
-- `renders/seven-spike-balls.html`: the 7 as spike balls on a stand, with buttons
-  that act out the riddle (twirl about the held spike, or hold it by another spike),
-  facts for each ball, and drilling angles.
-- `renders/kissing-flats.html`: spin the 7 kissing-flats balls in 3D, with a grind-depth
-  slider that runs from the plain ball through the kissing point to the face solid.
-- `kissing_flats.py`: writes the kissing-flats models to `models/kissing-flats-20mm/`
-  (one STL per ball, in millimetres, resting on a flat) and renders
-  `renders/kissing-flats.png`.
+- `viewer/`: the answer, in the browser.
+  - [`index.html`](viewer/index.html): interactive 3D viewer for the 7, in all three forms.
+  - [`spike-balls.html`](viewer/spike-balls.html): the 7 as spike balls on a stand,
+    with buttons that act out the riddle, facts for each ball, and drilling angles.
+  - [`kissing-flats.html`](viewer/kissing-flats.html): spin the 7 kissing-flats balls in
+    3D, with a grind-depth slider from the plain ball through the kissing point to the
+    face solid.
+  - [`explore.html`](viewer/explore.html): sliders for the arrangements the pivot rule
+    excludes, with jumps to the Archimedean solids.
+  - `lib/`: three.js, its orbit controls, and `data.js` (the 7, written by `script.py`).
+- `scripts/`
+  - `script.py`: builds T, O and I from scratch, finds the 9 candidate arrangements,
+    confirms they reduce to 7, and writes `viewer/lib/data.js`.
+  - `kissing_flats.py`: writes the kissing-flats models and `images/kissing-flats.png`.
+- `models/kissing-flats-20mm/`: one STL per kissing-flats ball, in millimetres, resting
+  on a flat.
+- `images/kissing-flats.png`: a render of the 7 kissing-flats balls.
 
 ## Running it
 
-Open `renders/index.html` in a browser; no build step. To regenerate the data
-(needs `numpy` and `scipy`), run from the repo root:
+Open any of the pages in a browser; no build step. To regenerate the data (needs
+`numpy` and `scipy`):
 
 ```
-python3 script.py
+python3 scripts/script.py
 ```
 
 To rebuild the kissing-flats models and render (needs `numpy`, `matplotlib`,
 `trimesh` and `manifold3d`), optionally at another size:
 
 ```
-python3 kissing_flats.py
-python3 kissing_flats.py --diameter 25
+python3 scripts/kissing_flats.py
+python3 scripts/kissing_flats.py --diameter 25
 ```
 
 ## Next

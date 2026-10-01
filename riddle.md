@@ -32,7 +32,7 @@ infinitely many. There are three separate sources of infinity:
 2. **Latitude is free** for C_n and D_n. For a fixed n, a ring can sit at any height.
 3. **Generic orbits.** Even under T, O, or I, any point that isn't on a symmetry axis
    has a full-size orbit (12, 24, or 60 dots), and that point can slide continuously.
-   `renders/generic.html` explores this family.
+   `viewer/explore.html` explores this family.
 
 A tighter riddle has to shut off all three.
 
@@ -72,7 +72,7 @@ corners of each group.
   - T's edge-midpoint family is an octahedron, identical to O's corner family.
 - O's and I's families are all distinct.
 
-1 (T) + 3 (O) + 3 (I) = **7**. `script.py` verifies this collapse with an explicit
+1 (T) + 3 (O) + 3 (I) = **7**. `scripts/script.py` verifies this collapse with an explicit
 rotation.
 
 | label | dots | vertex solid (convex hull) | face solid (shaved dual) |
@@ -290,7 +290,7 @@ The convex solids where both faces and edges are all alike are exactly these 7.
 The Archimedean solids are vertex-transitive under their full symmetry group, which
 includes reflections. Under **rotations only**:
 
-- **Reachable as a single orbit** (`generic.html` jumps to these). Only the two
+- **Reachable as a single orbit** (`viewer/explore.html` jumps to these). Only the two
   quasiregular ones are pivot orbits; the rest are generic orbits.
 
 | solid | group · dots | pivot? |
