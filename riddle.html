@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Spike Ball Riddle</title>
+<meta name="description" content="A riddle about balls with spikes, and a test bench for your answers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #eceff1; --surface: #f7f9fa; --ink: #17212b; --muted: #56626e; --rule: #c9d1d8;
+  --brass: #94661a; --blue: #2d5f8e; --orange: #b4531f;
+  --good: #1f6b43; --good-bg: #dcefe3; --bad: #9b2c2c; --bad-bg: #f6dede;
+  --btn: #17212b; --btn-ink: #f7f9fa;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10151a; --surface: #171e25; --ink: #e4e9ed; --muted: #93a0ac; --rule: #2a343f;
+    --brass: #d8a64a; --blue: #86b6e3; --orange: #ef9a64;
+    --good: #8fd6ad; --good-bg: #173427; --bad: #f2a3a3; --bad-bg: #3a1c1c;
+    --btn: #e4e9ed; --btn-ink: #10151a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10151a; --surface: #171e25; --ink: #e4e9ed; --muted: #93a0ac; --rule: #2a343f;
+  --brass: #d8a64a; --blue: #86b6e3; --orange: #ef9a64;
+  --good: #8fd6ad; --good-bg: #173427; --bad: #f2a3a3; --bad-bg: #3a1c1c;
+  --btn: #e4e9ed; --btn-ink: #10151a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55;
+  padding-inline: 20px; padding-block: 28px 56px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 44px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; margin: 0; line-height: 1.05; text-wrap: balance; }
+h1 { font-size: clamp(40px, 7vw, 72px); font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
+h2 { font-size: 28px; text-transform: uppercase; letter-spacing: 0.04em; }
+p { margin: 0; }
+a { color: inherit; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brass); }
+.muted { color: var(--muted); }
+button { font: inherit; }
+button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+button.act { font-weight: 600; font-size: 15px; line-height: 1; padding: 12px 16px; border-radius: 4px;
+  border: 1px solid var(--btn); background: var(--btn); color: var(--btn-ink); cursor: pointer; }
+button.act.alt { background: transparent; color: var(--ink); }
+button.link { background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 14px; }
+
+/* header */
+header { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px 48px; align-items: end; }
+header .title { display: grid; gap: 10px; }
+.riddle { display: grid; gap: 12px; font-size: 18px; max-width: 60ch; }
+.riddle blockquote { margin: 0; padding-left: 16px; border-left: 2px solid var(--brass); font-style: italic; display: grid; gap: 6px; }
+.riddle blockquote p:last-child { font-style: normal; font-weight: 600; }
+
+/* bench */
+.bench { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px;
+  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+.left { border-right: 1px solid var(--rule); display: grid; align-content: start; }
+.canvas-box { position: relative; width: 100%; aspect-ratio: 1 / 1; max-height: 520px; touch-action: none; cursor: grab; }
+.canvas-box:active { cursor: grabbing; }
+.canvas-box canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hint-tag { position: absolute; left: 16px; top: 14px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted); pointer-events: none; }
+.verdict { border-top: 1px solid var(--rule); padding: 18px 20px 22px; display: grid; gap: 14px; }
+.verdict-head { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; justify-content: space-between; }
+.verdict-head h3 { font-size: 26px; font-weight: 700; }
+.pill { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; white-space: nowrap; }
+.pill.good { color: var(--good); background: var(--good-bg); }
+.pill.bad { color: var(--bad); background: var(--bad-bg); }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; border-top: 1px solid var(--rule); }
+.checks li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
+.checks .mark { grid-row: span 2; font-family: var(--mono); font-size: 12px; font-weight: 500; text-transform: uppercase; padding-top: 2px; }
+.checks .mark.good { color: var(--good); }
+.checks .mark.bad { color: var(--bad); }
+.checks .rule { font-weight: 600; font-size: 15px; }
+.checks .why { color: var(--muted); font-size: 15px; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: 0; margin-right: 4px; }
+.sw.blue { background: var(--blue); } .sw.orange { background: var(--orange); }
+.status { font-size: 15px; }
+
+.right { padding: 20px; display: grid; gap: 14px; align-content: start; }
+.right > p { color: var(--muted); font-size: 15px; }
+.shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
+button.cand { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; text-align: left;
+  padding: 8px 10px; border-radius: 4px; border: 1px solid var(--rule); background: var(--bg); color: var(--ink); cursor: pointer; font-size: 14px; line-height: 1.25; }
+button.cand .n { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+button.cand[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+button.cand.found { border-color: var(--good); }
+button.cand.found .n::after { content: " · works"; color: var(--good); }
+button.cand.failed { color: var(--muted); }
+button.cand.failed .n::after { content: " · no"; }
+button.cand:hover { border-color: var(--muted); }
+
+/* finds, hints, answer */
+.row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; align-items: start; }
+.block { display: grid; gap: 12px; align-content: start; }
+.block > p { color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 14px; padding: 4px 10px; border-radius: 999px; background: var(--good-bg); color: var(--good); }
+ol.hints { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.answer { display: grid; gap: 12px; border-left: 2px solid var(--brass); padding-left: 16px; }
+.answer .big { font-family: var(--display); font-size: 44px; font-weight: 700; line-height: 1; }
+.answer ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+footer { border-top: 1px solid var(--rule); padding-top: 18px; font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 20px; }
+
+@media (max-width: 860px) {
+  header, .bench, .row3 { grid-template-columns: minmax(0, 1fr); }
+  .left { border-right: 0; border-bottom: 1px solid var(--rule); }
+}
+@media (max-width: 420px) { body { padding-inline: 16px; } .shelf { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">
+      <a class="eyebrow" href="index.html" style="text-decoration:none">ray-trinkets</a>
+      <h1>The Spike Ball Riddle</h1>
+    </div>
+    <div class="riddle">
+      <blockquote>
+        <p>Imagine a ball with spikes sticking straight out of it, all the same length.</p>
+        <p>The spikes don't all lie flat in one plane.</p>
+        <p>It doesn't matter which spike you hold it by: it always looks exactly the same.</p>
+        <p>And if you twirl it around the spike you're holding, it matches itself again before you've gone a full turn.</p>
+        <p>How many different designs are there?</p>
+      </blockquote>
+      <p class="muted">Have an idea? Put it on the test bench below. It checks each design against the riddle and tells you why it fails.</p>
+    </div>
+  </header>
+
+  <section class="bench" aria-label="Test bench">
+    <div class="left">
+      <div class="canvas-box" id="box" role="img" aria-label="3D view of the selected design">
+        <canvas id="cv"></canvas>
+        <span class="hint-tag">Drag to look around</span>
+      </div>
+      <div class="verdict" aria-live="polite">
+        <div class="verdict-head"><h3 id="vName"></h3><span class="pill" id="vPill"></span></div>
+        <ul class="checks" id="checks"></ul>
+        <p class="status" id="vNote"></p>
+      </div>
+    </div>
+    <div class="right">
+      <h2>Test bench</h2>
+      <p>Each design points its spikes at the corners of a shape, or at a mix of places. Pick one to test it.</p>
+      <div class="shelf" id="shelf"></div>
+    </div>
+  </section>
+
+  <div class="row3">
+    <section class="block" aria-label="Your finds">
+      <h2>Your finds</h2>
+      <p id="findsText"></p>
+      <div class="chips" id="chips"></div>
+      <p><button class="link" id="clear" type="button">Clear my progress</button></p>
+    </section>
+
+    <section class="block" aria-label="Hints">
+      <h2>Stuck?</h2>
+      <ol class="hints" id="hints"></ol>
+      <p><button class="act alt" id="hintBtn" type="button">Show a hint</button></p>
+    </section>
+
+    <section class="block" aria-label="The answer">
+      <h2>The answer</h2>
+      <p id="answerIntro">Only when you're ready.</p>
+      <p><button class="act" id="revealBtn" type="button">Show the answer</button></p>
+      <div class="answer" id="answer" hidden>
+        <div class="big">Seven.</div>
+        <p>Their spikes point at the corners of the tetrahedron (4), octahedron (6), cube (8), cuboctahedron (12), icosahedron (12), dodecahedron (20) and icosidodecahedron (30).</p>
+        <ul>
+          <li><a href="viewer/spike-balls.html">The seven as spike balls, acting out the riddle</a></li>
+          <li><a href="viewer/index.html">All seven in three forms, in 3D</a></li>
+          <li><a href="viewer/kissing-flats.html">Kissing flats: the seven as pocket stones</a></li>
+          <li><a href="viewer/explore.html">The near misses, with sliders</a></li>
+          <li><a href="https://github.com/vaughnparker/ray-trinkets/blob/main/riddle.md">Why there are exactly seven</a></li>
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <a href="index.html">← ray-trinkets home</a>
+    <a href="https://github.com/vaughnparker/ray-trinkets">Source on GitHub</a>
+  </footer>
+</div>
+
+<script>
+/* ---------- candidate designs ---------- */
+const PHI = (1 + Math.sqrt(5)) / 2, S2 = Math.SQRT2;
+const uniq = pts => { const out = []; pts.forEach(p => { if (!out.some(q => Math.hypot(p[0]-q[0], p[1]-q[1], p[2]-q[2]) < 1e-9)) out.push(p); }); return out; };
+const signs = v => uniq([1,-1].flatMap(a => [1,-1].flatMap(b => [1,-1].map(c => [v[0]*a, v[1]*b, v[2]*c]))));
+const cyc = v => [[v[0],v[1],v[2]], [v[2],v[0],v[1]], [v[1],v[2],v[0]]];
+const perms = v => uniq([[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]].map(p => p.map(i => v[i])));
+const all = (...vs) => uniq(vs.flatMap(v => signs(v)));
+const cycAll = (...vs) => uniq(vs.flatMap(v => cyc(v).flatMap(signs)));
+const permAll = v => uniq(perms(v).flatMap(signs));
+const ring = (n, z, off = 0) => Array.from({ length: n }, (_, k) => { const a = 2 * Math.PI * (k + off) / n; return [Math.cos(a), Math.sin(a), z]; });
+const prism = n => { const s = 2 * Math.sin(Math.PI / n); return [...ring(n, s / 2), ...ring(n, -s / 2)]; };
+const antiprism = n => { const s = Math.sin(Math.PI / n), z = Math.sqrt(4*s*s - 2 + 2*Math.cos(Math.PI / n)) / 2; return [...ring(n, z), ...ring(n, -z, 0.5)]; };
+const bipyramid = n => [...ring(n, 0), [0,0,1], [0,0,-1]];
+
+const TETRA = [[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]];
+const OCTA = cycAll([1,0,0]), CUBE = all([1,1,1]), CUBO = cycAll([1,1,0]);
+const CANDIDATES = [
+  { id: "tetra", name: "Tetrahedron corners", short: "Tetrahedron", pts: TETRA },
+  { id: "octa", name: "Octahedron corners", short: "Octahedron", pts: OCTA },
+  { id: "cube", name: "Cube corners", short: "Cube", pts: CUBE },
+  { id: "cubo", name: "Cuboctahedron corners", short: "Cuboctahedron", pts: CUBO },
+  { id: "ico", name: "Icosahedron corners", short: "Icosahedron", pts: cycAll([0,1,PHI]) },
+  { id: "dodeca", name: "Dodecahedron corners", short: "Dodecahedron", pts: uniq([...CUBE, ...cycAll([0,1/PHI,PHI])]) },
+  { id: "icosid", name: "Icosidodecahedron corners", short: "Icosidodecahedron", pts: cycAll([0,0,PHI], [0.5,PHI/2,PHI*PHI/2]) },
+  { id: "ttet", name: "Truncated tetrahedron corners", pts: uniq(perms([3,1,1]).flatMap(signs).filter(p => p.filter(x => x < 0).length % 2 === 0)) },
+  { id: "toct", name: "Truncated octahedron corners", pts: permAll([0,1,2]) },
+  { id: "tcube", name: "Truncated cube corners", pts: permAll([S2 - 1, 1, 1]) },
+  { id: "rco", name: "Rhombicuboctahedron corners", pts: permAll([1,1,1+S2]) },
+  { id: "soccer", name: "Soccer ball corners", pts: cycAll([0,1,3*PHI], [1,2+PHI,2*PHI], [PHI,2,PHI**3]) },
+  { id: "prism3", name: "Triangular prism corners", pts: prism(3) },
+  { id: "prism5", name: "Pentagonal prism corners", pts: prism(5) },
+  { id: "prism6", name: "Hexagonal prism corners", pts: prism(6) },
+  { id: "anti4", name: "Square antiprism corners", pts: antiprism(4) },
+  { id: "anti5", name: "Pentagonal antiprism corners", pts: antiprism(5) },
+  { id: "bipy3", name: "Triangular double pyramid corners", pts: bipyramid(3) },
+  { id: "bipy5", name: "Pentagonal double pyramid corners", pts: bipyramid(5) },
+  { id: "pyr4", name: "Square pyramid corners", pts: [...ring(4, 0), [0,0,1]] },
+  { id: "cubeocta", name: "Cube corners plus face centres", pts: uniq([...CUBE, ...OCTA]) },
+  { id: "octamid", name: "Octahedron plus a spike between each pair of neighbours", pts: uniq([...OCTA, ...CUBO]) },
+  { id: "hexring", name: "A flat ring of six", pts: ring(6, 0) },
+].map(c => ({ ...c, pts: c.pts.map(p => { const n = Math.hypot(...p); return [p[0]/n, p[1]/n, p[2]/n]; }) }))
+ .sort((a, b) => a.pts.length - b.pts.length || a.name.localeCompare(b.name));
+
+/* ---------- the three checks ---------- */
+const dot = (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+const cross = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+const apply = (M, v) => [M[0][0]*v[0]+M[0][1]*v[1]+M[0][2]*v[2], M[1][0]*v[0]+M[1][1]*v[1]+M[1][2]*v[2], M[2][0]*v[0]+M[2][1]*v[1]+M[2][2]*v[2]];
+const near = (a, b) => Math.abs(a[0]-b[0]) + Math.abs(a[1]-b[1]) + Math.abs(a[2]-b[2]) < 1e-6;
+const cols = (a, b, c) => [[a[0], b[0], c[0]], [a[1], b[1], c[1]], [a[2], b[2], c[2]]];
+const det3 = M => M[0][0]*(M[1][1]*M[2][2]-M[1][2]*M[2][1]) - M[0][1]*(M[1][0]*M[2][2]-M[1][2]*M[2][0]) + M[0][2]*(M[1][0]*M[2][1]-M[1][1]*M[2][0]);
+function inv3(M) {
+  const d = det3(M), C = (r, c) => { const m = M.filter((_, i) => i !== r).map(row => row.filter((_, j) => j !== c)); return ((r + c) % 2 ? -1 : 1) * (m[0][0]*m[1][1] - m[0][1]*m[1][0]); };
+  return [0,1,2].map(i => [0,1,2].map(j => C(j, i) / d));
+}
+const mul = (A, B) => A.map(r => [0,1,2].map(j => r[0]*B[0][j] + r[1]*B[1][j] + r[2]*B[2][j]));
+
+// Every turn of the ball that lands each spike on a spike.
+function rotations(P) {
+  const p0 = P[0];
+  let best = -2, p1 = null;
+  P.forEach(q => { const d = dot(p0, q); if (Math.abs(d) < 1 - 1e-9 && d > best) { best = d; p1 = q; } });
+  if (!p1) return [[[1,0,0],[0,1,0],[0,0,1]]];
+  const inv = inv3(cols(p0, p1, cross(p0, p1))), G = [];
+  for (const a of P) for (const b of P) {
+    if (Math.abs(dot(a, b) - best) > 1e-9) continue;
+    const R = mul(cols(a, b, cross(a, b)), inv);
+    if (Math.abs(det3(R) - 1) > 1e-6) continue;
+    if (P.every(p => { const q = apply(R, p); return P.some(r => near(q, r)); })) G.push(R);
+  }
+  return G;
+}
+const deg = x => Math.acos(Math.max(-1, Math.min(1, x))) * 180 / Math.PI;
+const fmtDeg = x => `${Math.round(x * 10) / 10}°`;
+const FRAC = { 2: "½", 3: "⅓", 4: "¼", 5: "⅕", 6: "⅙" };
+const frac = k => FRAC[k] || `1/${k}`;
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+// Angles from spike i to every other spike, sorted, grouped: [[angle, count], ...]
+function view(P, i) {
+  const angs = P.filter((_, j) => j !== i).map(q => Math.round(deg(dot(P[i], q)) * 100) / 100).sort((a, b) => a - b);
+  const out = []; angs.forEach(a => { const last = out[out.length - 1]; if (last && Math.abs(last[0] - a) < 0.02) last[1]++; else out.push([a, 1]); });
+  return out;
+}
+
+function test(c) {
+  const P = c.pts, n = P.length;
+  const M = [0,1,2].map(i => [0,1,2].map(j => P.reduce((s, p) => s + p[i]*p[j], 0)));
+  const flat = Math.abs(det3(M)) < 1e-9 * n * n * n;
+  const G = rotations(P);
+  const orbitOf = P.map(() => -1); let orbits = 0;
+  P.forEach((p, i) => { if (orbitOf[i] >= 0) return; G.forEach(R => { const q = apply(R, p); P.forEach((r, j) => { if (near(q, r)) orbitOf[j] = orbits; }); }); orbits++; });
+  const stab = P.map(p => G.filter(R => near(apply(R, p), p)).length);
+  const res = { A: -1, B: -1, checks: [] };
+
+  res.checks.push(flat
+    ? { ok: false, rule: "Not all in one plane", why: "Every spike lies in one flat plane, so this is a ring, not a ball." }
+    : { ok: true, rule: "Not all in one plane", why: "The spikes point out in every direction." });
+
+  if (orbits === 1) {
+    res.checks.push({ ok: true, rule: "Looks the same whichever spike you hold", why: `A turn of the ball carries any spike onto any other, and every spike lands on a spike.` });
+  } else {
+    const A = 0, B = orbitOf.indexOf(1); res.A = A; res.B = B;
+    const vA = view(P, A), vB = view(P, B);
+    let why;
+    if (vA[0][0] !== vB[0][0] || vA[0][1] !== vB[0][1]) {
+      why = `Held by the <span class="sw blue"></span>blue spike, its nearest spikes are ${plural(vA[0][1], "spike", "spikes")} at ${fmtDeg(vA[0][0])}. Held by the <span class="sw orange"></span>orange one, they're ${plural(vB[0][1], "spike", "spikes")} at ${fmtDeg(vB[0][0])}.`;
+    } else {
+      const k = vA.findIndex((x, i) => !vB[i] || x[0] !== vB[i][0] || x[1] !== vB[i][1]);
+      why = k < 0
+        ? `The <span class="sw blue"></span>blue and <span class="sw orange"></span>orange spikes see mirror-image views, and no turn can swap a view for its mirror image.`
+        : `The <span class="sw blue"></span>blue spike has ${plural(vA[k][1], "spike", "spikes")} at ${fmtDeg(vA[k][0])}; the <span class="sw orange"></span>orange one sees something different at that distance.`;
+    }
+    if (orbits > 2) why += ` There are ${orbits} different views in all.`;
+    res.checks.push({ ok: false, rule: "Looks the same whichever spike you hold", why });
+  }
+
+  const stuck = stab.findIndex(k => k === 1);
+  if (stuck < 0) {
+    const ks = [...new Set(stab)].sort((a, b) => b - a);
+    res.checks.push({ ok: true, rule: "Twirls back to itself before a full turn", why: ks.length === 1
+      ? `Twirl it around any spike and it matches itself every ${frac(ks[0])} turn.`
+      : `It matches itself every ${ks.map(frac).join(" or ")} turn, depending on the spike.` });
+  } else {
+    let who;
+    if (res.A === stuck || (res.A >= 0 && stab[res.A] === 1)) who = `the <span class="sw blue"></span>blue spike`;
+    else if (res.B >= 0 && stab[res.B] === 1) who = `the <span class="sw orange"></span>orange spike`;
+    else if (res.A < 0) { res.A = stuck; who = `the <span class="sw blue"></span>blue spike`; }
+    else who = "some of the spikes";
+    res.checks.push({ ok: false, rule: "Twirls back to itself before a full turn", why: `Twirl it around ${who} and it doesn't match itself until a full turn.` });
+  }
+  res.works = res.checks.every(x => x.ok);
+  return res;
+}
+
+/* ---------- drawing (same brass look as the spike-ball viewer) ---------- */
+const BRASS = { hi: [255,243,206], mid: [224,178,88], lo: [150,104,32], edge: [80,53,14] };
+const BLUE = { hi: [222,238,252], mid: [82,136,188], lo: [36,74,116], edge: [15,33,56] };
+const ORANGE = { hi: [255,226,204], mid: [224,120,62], lo: [150,62,22], edge: [72,28,8] };
+const col = (c, f) => `rgb(${Math.round(c[0]*f)},${Math.round(c[1]*f)},${Math.round(c[2]*f)})`;
+function sphere(ctx, x, y, r, pal, f) {
+  const g = ctx.createRadialGradient(x - r*0.36, y - r*0.42, r*0.04, x, y, r);
+  g.addColorStop(0, col(pal.hi, f)); g.addColorStop(0.28, col(pal.mid, f)); g.addColorStop(0.78, col(pal.lo, f)); g.addColorStop(1, col(pal.edge, f));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+}
+function rod(ctx, a, b, w, pal, f) {
+  const dx = b[0]-a[0], dy = b[1]-a[1], L = Math.hypot(dx, dy); if (L < 0.5) return;
+  let nx = -dy/L, ny = dx/L; if (nx*-0.6 + ny*-0.8 < 0) { nx = -nx; ny = -ny; }
+  const mx = (a[0]+b[0])/2, my = (a[1]+b[1])/2;
+  const g = ctx.createLinearGradient(mx + nx*w/2, my + ny*w/2, mx - nx*w/2, my - ny*w/2);
+  g.addColorStop(0, col(pal.mid, f)); g.addColorStop(0.3, col(pal.hi, f)); g.addColorStop(0.72, col(pal.lo, f)); g.addColorStop(1, col(pal.edge, f));
+  ctx.strokeStyle = g; ctx.lineWidth = w; ctx.lineCap = "butt"; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+}
+function camera(W, H, az, el, k) {
+  const ca = Math.cos(az), sa = Math.sin(az), ce = Math.cos(el), se = Math.sin(el), D = 320;
+  return p => { const x1 = ca*p[0] + sa*p[1], y1 = -sa*p[0] + ca*p[1], z1 = p[2];
+    const xs = -x1, ys = z1*ce - y1*se, zs = z1*se + y1*ce, s = k*D/(D - zs); return [W/2 + xs*s, H/2 - ys*s, zs, s]; };
+}
+function draw(ctx, W, H, P, view, tint) {
+  const cam = camera(W, H, view.az, view.el, Math.min(W, H) / 76);
+  ctx.clearRect(0, 0, W, H);
+  const items = [], c = cam([0, 0, 0]);
+  items.push({ z: c[2], d: () => sphere(ctx, c[0], c[1], 10*c[3], BRASS, 0.97) });
+  P.forEach((v, i) => {
+    const a = cam([v[0]*9.4, v[1]*9.4, v[2]*9.4]), b = cam([v[0]*30, v[1]*30, v[2]*30]);
+    const f = 0.7 + 0.3 * Math.max(0, Math.min(1, (b[2] + 30) / 60));
+    items.push({ z: b[2], d: () => { rod(ctx, a, b, 2.5*(a[3]+b[3])/2, BRASS, f); sphere(ctx, b[0], b[1], 2.5*b[3], tint[i] || BRASS, f); } });
+  });
+  items.sort((p, q) => p.z - q.z).forEach(it => it.d());
+}
+
+/* ---------- page state ---------- */
+const KEY = "ray-trinkets-bench-v1";
+let saved = { found: [], failed: [], hints: 0 };
+try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s && Array.isArray(s.found)) saved = { failed: [], hints: 0, ...s }; } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} };
+const ANSWERS = 7;
+
+const cv = document.getElementById("cv"), box = document.getElementById("box");
+let cur = null, tint = {}, v = { az: 0.6, el: 0.42 }, spin = !matchMedia("(prefers-reduced-motion: reduce)").matches, last = 0;
+function size() { const r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2);
+  const w = Math.max(1, Math.round(r.width*d)), h = Math.max(1, Math.round(r.height*d)); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } }
+function frame(t) { const dt = last ? Math.min(0.05, (t - last) / 1000) : 0; last = t; if (spin) v.az += dt * 0.25;
+  size(); draw(cv.getContext("2d"), cv.width, cv.height, cur.pts, v, tint); requestAnimationFrame(frame); }
+let drag = null;
+box.addEventListener("pointerdown", e => { drag = [e.clientX, e.clientY]; spin = false; box.setPointerCapture(e.pointerId); });
+box.addEventListener("pointermove", e => { if (!drag) return; v.az -= (e.clientX - drag[0]) * 0.009; v.el = Math.max(-1.3, Math.min(1.3, v.el + (e.clientY - drag[1]) * 0.009)); drag = [e.clientX, e.clientY]; });
+["pointerup", "pointercancel"].forEach(t => box.addEventListener(t, () => drag = null));
+
+function choose(c, record = true) {
+  cur = c;
+  const r = test(c);
+  tint = {}; if (r.A >= 0) tint[r.A] = BLUE; if (r.B >= 0) tint[r.B] = ORANGE;
+  document.getElementById("vName").textContent = `${c.name} · ${c.pts.length}`;
+  const pill = document.getElementById("vPill");
+  pill.textContent = r.works ? "Works" : "Doesn't work"; pill.className = "pill " + (r.works ? "good" : "bad");
+  document.getElementById("checks").innerHTML = r.checks.map(x =>
+    `<li><span class="mark ${x.ok ? "good" : "bad"}">${x.ok ? "Yes" : "No"}</span><span class="rule">${x.rule}</span><span class="why">${x.why}</span></li>`).join("");
+  const isNew = record && r.works && !saved.found.includes(c.id);
+  if (isNew) saved.found.push(c.id);
+  if (record && !r.works && !saved.failed.includes(c.id)) saved.failed.push(c.id);
+  save();
+  document.getElementById("vNote").textContent = r.works
+    ? (isNew ? "It passes every check. Added to your finds." : "It passes every check. Already in your finds.")
+    : "Try another design.";
+  renderShelf(); renderFinds();
+}
+
+function renderShelf() {
+  document.querySelectorAll("button.cand").forEach(b => {
+    b.setAttribute("aria-pressed", String(b.dataset.id === cur.id));
+    b.classList.toggle("found", saved.found.includes(b.dataset.id));
+    b.classList.toggle("failed", saved.failed.includes(b.dataset.id));
+  });
+}
+function renderFinds() {
+  const n = saved.found.length;
+  document.getElementById("findsText").textContent = n === 0
+    ? "Nothing yet. Designs that pass every check collect here."
+    : n >= ANSWERS ? `You've found all of them. There are exactly seven.` : `You've found ${n}. Are there more?`;
+  document.getElementById("chips").innerHTML = CANDIDATES.filter(c => saved.found.includes(c.id))
+    .map(c => `<span class="chip">${c.short || c.name} · ${c.pts.length}</span>`).join("");
+  if (n >= ANSWERS) showAnswer();
+}
+
+const HINTS = [
+  "Start with the corners of shapes you already know. Dice are a good place to look.",
+  "A half turn counts as “before a full turn”.",
+  "Shapes with two kinds of corner fail the second check. Shapes whose corners sit in little clusters usually pass it but fail the twirl.",
+  "The answers fall into three symmetry families: the tetrahedron's, the cube's and the icosahedron's. Some shapes you might not know by name belong to them.",
+];
+function renderHints() {
+  document.getElementById("hints").innerHTML = HINTS.slice(0, saved.hints).map(h => `<li>${h}</li>`).join("");
+  const btn = document.getElementById("hintBtn");
+  btn.hidden = saved.hints >= HINTS.length;
+  btn.textContent = saved.hints ? "Show another hint" : "Show a hint";
+}
+document.getElementById("hintBtn").addEventListener("click", () => { saved.hints = Math.min(HINTS.length, saved.hints + 1); save(); renderHints(); });
+function showAnswer() { document.getElementById("answer").hidden = false; document.getElementById("revealBtn").hidden = true; document.getElementById("answerIntro").hidden = true; }
+document.getElementById("revealBtn").addEventListener("click", showAnswer);
+document.getElementById("clear").addEventListener("click", () => {
+  saved = { found: [], failed: [], hints: 0 }; save();
+  document.getElementById("answer").hidden = true; document.getElementById("revealBtn").hidden = false; document.getElementById("answerIntro").hidden = false;
+  renderShelf(); renderFinds(); renderHints();
+});
+
+const shelf = document.getElementById("shelf");
+CANDIDATES.forEach(c => {
+  const b = document.createElement("button"); b.type = "button"; b.className = "cand"; b.dataset.id = c.id;
+  b.innerHTML = `<span>${c.name}</span><span class="n">${c.pts.length}</span>`;
+  b.addEventListener("click", () => choose(c)); shelf.appendChild(b);
+});
+renderHints();
+choose(CANDIDATES.find(c => c.id === "prism3"), false);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

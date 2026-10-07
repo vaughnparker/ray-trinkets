@@ -45,10 +45,12 @@ alike.
 
 ## What's here
 
-Live site: <https://vaughnparker.github.io/ray-trinkets/>. The home page poses the
-riddle without giving the answer away; everything under `viewer/` shows it.
+Live site: <https://vaughnparker.github.io/ray-trinkets/>. The home page links to every
+other page. The riddle page poses the riddle without giving the answer away; everything
+under `viewer/` shows it.
 
-- [`index.html`](index.html): the riddle, a test bench that checks any candidate
+- [`index.html`](index.html): the home page, a short list of links to everything else.
+- [`riddle.html`](riddle.html): the riddle, a test bench that checks any candidate
   against the rules and says why it fails, hints one at a time, and a button that
   reveals the answer.
 - [`riddle.md`](riddle.md): the math. How the riddle was narrowed to exactly 7,

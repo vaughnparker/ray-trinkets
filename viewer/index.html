@@ -3,45 +3,76 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ray-trinkets — the 7 elementary ray-sets</title>
+<title>ray-trinkets: the three forms</title>
 <style>
-  :root{--bg:#0b0e14;--panel:#151a24;--ink:#e6e9ef;--muted:#98a2b3;}
+  :root{--bg:#0b0e14;--panel:#151a24;--ink:#e6e9ef;--muted:#98a2b3;--line:#2a3342;--field:#0f141d;}
   *{box-sizing:border-box;}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
   #app{display:flex;height:100vh;overflow:hidden;}
   #view{flex:1;position:relative;}
-  #panel{width:320px;background:var(--panel);padding:18px;overflow-y:auto;border-left:1px solid #222a37;}
+  #panel{width:400px;background:var(--panel);padding:18px;overflow-y:auto;border-left:1px solid var(--line);}
   h1{font-size:16px;margin:0 0 6px;}
-  .sub{font-size:12px;color:var(--muted);margin:0 0 14px;line-height:1.5;}
   label{font-size:12px;color:var(--muted);display:block;margin:14px 0 6px;}
   .row{display:flex;gap:8px;flex-wrap:wrap;}
-  .row button{flex:1 1 auto;min-width:64px;padding:8px 6px;border-radius:8px;border:1px solid #2a3342;background:#0f141d;color:var(--ink);font-size:12px;cursor:pointer;}
-  .row button.active{background:#1f6feb;border-color:#1f6feb;color:#fff;font-weight:600;}
+  .row button{flex:1 1 auto;min-width:56px;padding:8px 6px;border-radius:8px;border:1px solid var(--line);background:var(--field);color:var(--ink);font-size:12px;cursor:pointer;}
+  .row button.active{background:var(--accent,#1f6feb);border-color:var(--accent,#1f6feb);color:#fff;}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--accent,#1f6feb);outline-offset:2px;}
+  .list{display:flex;flex-direction:column;gap:6px;}
+  .list button{display:flex;align-items:baseline;gap:10px;width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--field);color:var(--ink);font-size:12px;text-align:left;cursor:pointer;}
+  .list button b{min-width:44px;font-variant-numeric:tabular-nums;}
+  .list button span{color:var(--muted);}
+  .list button.active{background:var(--accent,#1f6feb);border-color:var(--accent,#1f6feb);color:#fff;}
+  .list button.active span{color:#fff;}
+  .sliderRow{display:flex;align-items:center;gap:10px;}
+  .sliderRow input[type=range]{flex:1;accent-color:var(--accent,#1f6feb);}
   .check{display:flex;align-items:center;gap:7px;margin-top:12px;cursor:pointer;font-size:12px;color:var(--muted);}
   .check input{width:auto;}
-  .readout{background:#0f141d;border:1px solid #2a3342;border-radius:10px;padding:12px;font-size:13px;margin-top:16px;line-height:1.6;}
-  .big{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;margin-bottom:6px;}
+  #view canvas{display:block;}
+  #paneBoxes{position:absolute;inset:0;pointer-events:none;}
+  .paneBox{position:absolute;}
+  .paneBox + .paneBox{border-left:1px solid var(--line);}
+  #paneBoxes.stacked .paneBox + .paneBox{border-left:none;border-top:1px solid var(--line);}
+  .paneLabel{position:absolute;top:12px;left:14px;right:14px;display:flex;flex-direction:column;gap:2px;
+    font-size:12px;color:var(--muted);text-shadow:0 1px 3px rgba(0,0,0,.8);}
+  .paneLabel b{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent,#e6e9ef);}
   #caption{position:absolute;left:0;right:0;bottom:0;padding:14px 20px;background:linear-gradient(transparent,rgba(6,8,12,.9));font-size:13px;color:var(--muted);pointer-events:none;}
+  .readout{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;margin-top:16px;line-height:1.6;}
+  .big{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;margin-bottom:6px;}
+  .sub{font-size:12px;color:var(--muted);margin:0 0 14px;line-height:1.5;}
   .hint{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.5;}
+  .hint a{color:inherit;}
+  .listTitle{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:18px;
+    font-size:12px;color:var(--muted);cursor:pointer;list-style:none;user-select:none;}
+  .listTitle::-webkit-details-marker{display:none;}
+  .listTitle:hover{color:var(--ink);}
+  .listTitle > span:first-child::before{content:'▸';display:inline-block;width:1em;transition:transform .15s;}
+  details[open] > .listTitle > span:first-child::before{transform:rotate(90deg);}
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="view"><div id="caption"></div></div>
+  <div id="view">
+    <div id="paneBoxes" hidden>
+      <div class="paneBox"><div class="paneLabel"></div></div>
+      <div class="paneBox"><div class="paneLabel"></div></div>
+      <div class="paneBox"><div class="paneLabel"></div></div>
+    </div>
+    <div id="caption"></div>
+  </div>
   <div id="panel">
-    <h1>ray-trinkets — the 7</h1>
-    <p class="sub">Every elementary ray-set: a single orbit of dots under a polyhedral
-    rotation group (T, O, or I). Pick one, then pick how the dots become a physical
-    object.</p>
+    <p style="font-size:11px;margin:0 0 10px;"><a href="../index.html" style="color:var(--muted);">← ray-trinkets home</a></p>
+    <h1>ray-trinkets: the three forms</h1>
+    <p class="sub">Pick an arrangement, then pick how its dots become an object.</p>
 
-    <label>Ray-set</label>
-    <div class="row" id="shapeButtons"></div>
+    <label>Arrangement</label>
+    <div class="list" id="shapeButtons"></div>
 
-    <label>Show as</label>
+    <label style="margin-top:18px;">Show as</label>
     <div class="row" id="formButtons">
       <button data-form="spike" class="active">Spike-ball</button>
       <button data-form="vertex">Vertex (hull)</button>
       <button data-form="face">Face (dual)</button>
+      <button data-form="all">All 3</button>
     </div>
 
     <label class="check"><input type="checkbox" id="rotate" checked> slowly rotate</label>
@@ -54,14 +85,17 @@
     <p class="hint">Drag to orbit, scroll to zoom. <b>Spike-ball</b> is the dots as
     literal rays; <b>vertex</b> is their convex hull (dots become corners);
     <b>face</b> slides a tangent plane in at each dot until neighbors meet
-    (dots become faces) — the dual solid.</p>
+    (dots become faces), giving the dual solid.</p>
 
-    <p class="hint">These 7 are the axis-locked special cases. <a href="explore.html"
-    style="color:inherit">Build a generic (off-axis) orbit →</a></p>
-
-    <p class="hint"><a href="spike-balls.html" style="color:inherit">The riddle, acted out on spike balls →</a><br>
-    <a href="kissing-flats.html" style="color:inherit">Kissing flats in 3D →</a><br>
-    <a href="../index.html" style="color:inherit">← Back to the riddle</a></p>
+    <details class="looks">
+      <summary class="listTitle"><span>Appearance</span></summary>
+      <label for="spin">Spin speed <span id="spinVal"></span></label>
+      <div class="sliderRow"><input type="range" id="spin" min="0" max="3" step="0.1" value="1"></div>
+      <label for="stalk">Stalk thickness <span id="stalkVal"></span></label>
+      <div class="sliderRow"><input type="range" id="stalk" min="0.3" max="2.5" step="0.1" value="1"></div>
+      <label for="tip">End-ball size <span id="tipVal"></span></label>
+      <div class="sliderRow"><input type="range" id="tip" min="0.4" max="2.5" step="0.1" value="1"></div>
+    </details>
   </div>
 </div>
 
@@ -70,24 +104,80 @@
 <script src="lib/OrbitControls.js"></script>
 <script>
 const PALETTE = { T: 0xe8833a, O: 0x3b7dd8, I: 0x2ca58d };
-const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
-const nrm=a=>Math.hypot(a[0],a[1],a[2]);
+const hex = c => '#'+c.toString(16).padStart(6,'0');
+const FAMILY = { T:'tetrahedral', O:'octahedral', I:'icosahedral' };
+const DUAL = { tetrahedron:'tetrahedron', octahedron:'cube', cube:'octahedron', cuboctahedron:'rhombic dodecahedron',
+  icosahedron:'dodecahedron', dodecahedron:'icosahedron', icosidodecahedron:'rhombic triacontahedron' };
 
-// ---- three.js scene, same setup as the ray-sets viewers ----
+// ---- three.js scene ----
+// Three panes, each with its own scene, all seen through one shared camera. Single
+// forms use pane 0 full-size; "All 3" draws spike / vertex / face side by side, so
+// dragging anywhere turns all three together.
 const view=document.getElementById('view'), caption=document.getElementById('caption');
-const scene=new THREE.Scene(); scene.background=new THREE.Color(0x0b0e14);
+const paneBoxes=document.getElementById('paneBoxes');
 const cam=new THREE.PerspectiveCamera(45, view.clientWidth/view.clientHeight, 0.01, 100);
 const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(devicePixelRatio);
-renderer.setSize(view.clientWidth, view.clientHeight); view.appendChild(renderer.domElement);
+renderer.setSize(view.clientWidth, view.clientHeight); view.prepend(renderer.domElement);
 const controls=new THREE.OrbitControls(cam, renderer.domElement); controls.enableDamping=true;
-scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-const key=new THREE.DirectionalLight(0xffffff, 0.85); key.position.set(0.5,0.85,0.6); scene.add(key);
-const fill=new THREE.DirectionalLight(0xffffff, 0.25); fill.position.set(-0.6,-0.3,-0.5); scene.add(fill);
-const solid=new THREE.Group(); scene.add(solid);
+
+function makePane(){
+  const scene=new THREE.Scene(); scene.background=new THREE.Color(0x0b0e14);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const key=new THREE.DirectionalLight(0xffffff, 0.85); key.position.set(0.5,0.85,0.6); scene.add(key);
+  const fill=new THREE.DirectionalLight(0xffffff, 0.25); fill.position.set(-0.6,-0.3,-0.5); scene.add(fill);
+  const solid=new THREE.Group(); scene.add(solid);
+  return {scene, solid};
+}
+const panes=[makePane(), makePane(), makePane()];
+const SPLIT_FORMS=['spike','vertex','face'];
+const FORM_LABEL={spike:'Spike-ball', vertex:'Vertex hull', face:'Face dual'};
+
+// Pane rectangles in CSS pixels, top-left origin. Side by side when the view is
+// wide, stacked when it's tall.
+function paneRects(){
+  const W=view.clientWidth, H=view.clientHeight;
+  if(currentForm!=='all') return [{x:0,y:0,w:W,h:H}];
+  if(W >= H) { const w=W/3; return [0,1,2].map(i=>({x:i*w, y:0, w, h:H})); }
+  const h=H/3; return [0,1,2].map(i=>({x:0, y:i*h, w:W, h}));
+}
+function layoutPaneBoxes(){
+  const rects=paneRects(), split=currentForm==='all';
+  paneBoxes.hidden=!split;
+  paneBoxes.classList.toggle('stacked', split && rects[0].w===view.clientWidth);
+  if(!split) return;
+  [...paneBoxes.children].forEach((box,i)=>{
+    const r=rects[i];
+    Object.assign(box.style, {left:r.x+'px', top:r.y+'px', width:r.w+'px', height:r.h+'px'});
+  });
+}
 
 function clear(g){ while(g.children.length){ const c=g.children.pop();
-  if(c.geometry) c.geometry.dispose(); if(c.material) c.material.dispose(); } }
+  c.traverse(o=>{ if(o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); }); } }
 
+const looks = { spin:1, stalk:1, tip:1 };
+const spikeR = () => 0.42 + 0.7 + 0.05*looks.tip;   // sphere + spike + tip ball
+
+function buildSpike(rays, color){
+  const grp=new THREE.Group();
+  const sphereMat=new THREE.MeshStandardMaterial({color:0x2a2d34, roughness:0.7, metalness:0.1});
+  grp.add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), sphereMat));
+  // Smooth shading, so the rods and tip balls read as round rather than faceted.
+  const spikeMat=new THREE.MeshStandardMaterial({color, roughness:0.5, metalness:0.15});
+  const up=new THREE.Vector3(0,1,0), len=0.7;
+  const cylGeo=new THREE.CylinderGeometry(0.035*looks.stalk,0.035*looks.stalk,len,16),
+        tipGeo=new THREE.SphereGeometry(0.05*looks.tip,24,16);
+  rays.forEach(r=>{
+    const v=new THREE.Vector3(...r).normalize();
+    const cyl=new THREE.Mesh(cylGeo, spikeMat);
+    cyl.quaternion.setFromUnitVectors(up, v);
+    cyl.position.copy(v.clone().multiplyScalar(0.42+len/2));
+    grp.add(cyl);
+    const tip=new THREE.Mesh(tipGeo, spikeMat);
+    tip.position.copy(v.clone().multiplyScalar(0.42+len));
+    grp.add(tip);
+  });
+  return grp;
+}
 function faceGeom(poly){
   const g=new THREE.BufferGeometry(), pos=[];
   for(let i=1;i<poly.length-1;i++) pos.push(...poly[0], ...poly[i], ...poly[i+1]);
@@ -99,8 +189,7 @@ function edgeLoop(poly, colorHex){
   g.setAttribute('position', new THREE.Float32BufferAttribute(poly.flat(),3));
   return new THREE.LineLoop(g, new THREE.LineBasicMaterial({color:colorHex}));
 }
-
-function buildFacePolyhedron(polys, color){
+function buildPolyhedron(polys, color){
   const grp=new THREE.Group();
   polys.forEach(poly=>{
     grp.add(new THREE.Mesh(faceGeom(poly), new THREE.MeshStandardMaterial(
@@ -110,61 +199,71 @@ function buildFacePolyhedron(polys, color){
   return grp;
 }
 
-function buildSpike(rays, color){
-  const grp=new THREE.Group();
-  const sphereMat=new THREE.MeshStandardMaterial({color:0x2a2d34, roughness:0.7, metalness:0.1});
-  grp.add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), sphereMat));
-  const spikeMat=new THREE.MeshStandardMaterial({color, roughness:0.5, metalness:0.15, flatShading:true});
-  const up=new THREE.Vector3(0,1,0), len=0.7;
-  rays.forEach(r=>{
-    const v=new THREE.Vector3(...r).normalize();
-    const cyl=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,len,14), spikeMat);
-    cyl.quaternion.setFromUnitVectors(up, v);
-    cyl.position.copy(v.clone().multiplyScalar(0.42+len/2));
-    grp.add(cyl);
-    const tip=new THREE.Mesh(new THREE.SphereGeometry(0.05,14,12), spikeMat);
-    tip.position.copy(v.clone().multiplyScalar(0.42+len));
-    grp.add(tip);
-  });
-  return grp;
-}
-
+// Move the camera in or out so a radius-maxR object fits the (first) pane, keeping the
+// current viewing direction. Narrow panes are limited by the horizontal field of view.
 function frame(maxR){
-  const dist=Math.max(2.0, maxR/Math.tan(Math.PI/8)*1.12);
-  cam.position.copy(new THREE.Vector3(1.1,0.8,1.1).normalize().multiplyScalar(dist));
+  const r=paneRects()[0], aspect=r.w/r.h;
+  const vHalf=Math.PI/8, hHalf=Math.atan(Math.tan(vHalf)*aspect);
+  // 1.3: leave a margin, so the solid fills about three quarters of the view.
+  const dist=Math.max(2.0, maxR/Math.sin(Math.min(vHalf,hHalf))*1.3);
+  const dir = cam.position.lengthSq()>0 ? cam.position.clone().normalize()
+                                        : new THREE.Vector3(1.1,0.8,1.1).normalize();
+  cam.position.copy(dir.multiplyScalar(dist));
   cam.lookAt(0,0,0); controls.target.set(0,0,0); controls.update();
 }
 
+
+// ---- state ----
 let currentShape=RAYSETS.find(s=>s.shape==='O'&&s.size===6), currentForm='spike';
+let lastFramedR=null;
 
 function render(){
-  clear(solid);
+  panes.forEach(pn=>clear(pn.solid));
   const s=currentShape, color=PALETTE[s.shape];
-  let pts;
-  if(currentForm==='spike'){ solid.add(buildSpike(s.rays,color)); pts=s.rays.map(r=>r.map(x=>x*1.12)); }
-  else if(currentForm==='vertex'){ solid.add(buildFacePolyhedron(s.vertexFaces,color)); pts=s.rays; }
-  else { solid.add(buildFacePolyhedron(s.dualFaces,color)); pts=s.dualFaces.flat(); }
-  let maxR=0; pts.forEach(p=>maxR=Math.max(maxR, nrm(p)));
-  frame(maxR);
-  updateReadout(s);
+  document.documentElement.style.setProperty('--accent', hex(color));
+  const split=currentForm==='all';
+  const wanted=split ? SPLIT_FORMS : [currentForm];
+  let maxR=1;
+  wanted.forEach((form,i)=>{
+    let obj, r;
+    if(form==='spike'){ obj=buildSpike(s.rays, color); r=spikeR(); }
+    else if(form==='vertex'){ obj=buildPolyhedron(s.vertexFaces, color); r=1; }
+    else { obj=buildPolyhedron(s.dualFaces, color); r=Math.max(...s.dualFaces.flat().map(v=>Math.hypot(...v))); }
+    // In split view every pane is scaled to the same radius so one camera fits all.
+    if(split) obj.scale.setScalar(1/r); else maxR=r;
+    panes[i].solid.add(obj);
+    if(split) paneBoxes.children[i].querySelector('.paneLabel').innerHTML=paneLabel(form);
+  });
+  if(split) maxR=1;
+  if(lastFramedR===null || Math.abs(maxR-lastFramedR)/lastFramedR > 0.15){ frame(maxR); lastFramedR=maxR; }
+  updateReadout();
 }
 
-function updateReadout(s){
-  const formLabel={spike:'spike-ball',vertex:'vertex polyhedron',face:'face polyhedron (dual)'}[currentForm];
-  document.getElementById('big').textContent = `${s.shape} · ${s.size}`;
-  document.getElementById('detail').innerHTML =
-    `${s.name}, ${s.size} dots — single orbit under ${s.shape==='T'?'tetrahedral':s.shape==='O'?'octahedral':'icosahedral'} symmetry`;
-  caption.innerHTML = `<b>${s.shape} · ${s.size}</b> — ${s.name}, shown as ${formLabel}`;
+function paneLabel(form){
+  const s=currentShape;
+  const what = form==='spike' ? `${s.shape} symmetry, ${s.size} dots`
+             : form==='vertex' ? s.name : DUAL[s.name];
+  return `<b>${FORM_LABEL[form]}</b><span>${what}</span>`;
+}
+
+function updateReadout(){
+  const s=currentShape, cap=w=>w[0].toUpperCase()+w.slice(1);
+  document.getElementById('big').textContent=`${s.shape} · ${s.size}`;
+  document.getElementById('detail').textContent=
+    `${cap(s.name)}, ${s.size} dots: a single orbit under ${FAMILY[s.shape]} symmetry. Its dual is the ${DUAL[s.name]}.`;
+  // All 3 has no caption: its pane labels say the same thing.
+  caption.hidden=currentForm==='all';
+  const face=currentForm==='face';
+  caption.innerHTML=`<b>${cap(face ? DUAL[s.name] : s.name)}, ${s.shape} symmetry, ${s.size} ${face ? 'faces' : 'dots'}</b>`;
 }
 
 // ---- controls ----
 const shapeBtns=document.getElementById('shapeButtons');
 RAYSETS.forEach(s=>{
   const b=document.createElement('button');
-  b.textContent=`${s.shape}·${s.size}`;
-  b.title=s.name;
-  b.onclick=()=>{ currentShape=s; solid.rotation.y=0; render(); updateActiveShape(); };
+  b.innerHTML=`<b>${s.shape} · ${s.size}</b><span>${s.name}</span>`;
   b.dataset.key=`${s.shape}${s.size}`;
+  b.onclick=()=>{ currentShape=s; panes.forEach(pn=>pn.solid.rotation.y=0); lastFramedR=null; render(); updateActiveShape(); };
   shapeBtns.appendChild(b);
 });
 function updateActiveShape(){
@@ -173,33 +272,53 @@ function updateActiveShape(){
 }
 
 const formBtns=document.getElementById('formButtons');
-formBtns.querySelectorAll('button').forEach(b=>{
-  b.onclick=()=>{
-    currentForm=b.dataset.form;
-    formBtns.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    render();
-  };
+function setForm(form){
+  currentForm=form;
+  formBtns.querySelectorAll('button').forEach(x=>x.classList.toggle('active', x.dataset.form===form));
+  layoutPaneBoxes();
+  lastFramedR=null;   // pane shape changed, so refit
+  render();
+}
+formBtns.querySelectorAll('button').forEach(b=>{ b.onclick=()=>setForm(b.dataset.form); });
+
+['spin','stalk','tip'].forEach(k=>{
+  const el=document.getElementById(k), out=document.getElementById(k+'Val');
+  const show=()=>{ looks[k]=+el.value; out.textContent=looks[k].toFixed(1)+'×'; };
+  show();
+  el.addEventListener('input', ()=>{ show(); if(k!=='spin') render(); });
 });
 
-let rotating=true;
-document.getElementById('rotate').addEventListener('change', e=>rotating=e.target.checked);
+let rotating=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+const rotateEl=document.getElementById('rotate');
+rotateEl.checked=rotating;
+rotateEl.addEventListener('change', e=>rotating=e.target.checked);
 
-// ---- animation ----
 const clock=new THREE.Clock();
 function loop(){
   requestAnimationFrame(loop);
   const dt=clock.getDelta();
-  if(rotating) solid.rotation.y += 0.3*dt;
-  controls.update(); renderer.render(scene, cam);
+  if(rotating) panes.forEach(pn=>pn.solid.rotation.y += 0.3*looks.spin*dt);
+  controls.update();
+  const H=view.clientHeight, split=currentForm==='all';
+  renderer.setScissorTest(split);
+  paneRects().forEach((r,i)=>{
+    const y=H-r.y-r.h;   // WebGL viewports start at the bottom
+    renderer.setViewport(r.x, y, r.w, r.h);
+    renderer.setScissor(r.x, y, r.w, r.h);
+    cam.aspect=r.w/r.h; cam.updateProjectionMatrix();
+    renderer.render(panes[i].scene, cam);
+  });
 }
 loop();
 
 updateActiveShape();
 render();
 
-window.addEventListener('resize', ()=>{ cam.aspect=view.clientWidth/view.clientHeight;
-  cam.updateProjectionMatrix(); renderer.setSize(view.clientWidth, view.clientHeight); });
+window.addEventListener('resize', ()=>{
+  renderer.setSize(view.clientWidth, view.clientHeight);
+  layoutPaneBoxes();
+  lastFramedR=null; render();
+});
 </script>
 </body>
 </html>
