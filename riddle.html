@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Spike Ball Riddle</title>
-<meta name="description" content="A riddle about balls with spikes, and a test bench for your answers.">
+<meta name="description" content="A math riddle about rotational symmetry, stated carefully, with pictures.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -19,320 +19,245 @@
   --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root {
     --bg: #10151a; --surface: #171e25; --ink: #e4e9ed; --muted: #93a0ac; --rule: #2a343f;
     --brass: #d8a64a; --blue: #86b6e3; --orange: #ef9a64;
     --good: #8fd6ad; --good-bg: #173427; --bad: #f2a3a3; --bad-bg: #3a1c1c;
     --btn: #e4e9ed; --btn-ink: #10151a; color-scheme: dark;
   }
 }
-:root[data-theme="dark"] {
-  --bg: #10151a; --surface: #171e25; --ink: #e4e9ed; --muted: #93a0ac; --rule: #2a343f;
-  --brass: #d8a64a; --blue: #86b6e3; --orange: #ef9a64;
-  --good: #8fd6ad; --good-bg: #173427; --bad: #f2a3a3; --bad-bg: #3a1c1c;
-  --btn: #e4e9ed; --btn-ink: #10151a; color-scheme: dark;
-}
 * { box-sizing: border-box; }
 html, body { margin: 0; }
-[hidden] { display: none !important; }
-body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55;
-  padding-inline: 20px; padding-block: 28px 56px; }
-.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 44px; }
-h1, h2, h3 { font-family: var(--display); font-weight: 600; margin: 0; line-height: 1.05; text-wrap: balance; }
-h1 { font-size: clamp(40px, 7vw, 72px); font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
-h2 { font-size: 28px; text-transform: uppercase; letter-spacing: 0.04em; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.6;
+  padding-inline: 20px; padding-block: 40px 72px; }
+.wrap { max-width: 780px; margin: 0 auto; display: grid; gap: 56px; }
+h1, h2 { font-family: var(--display); font-weight: 600; margin: 0; line-height: 1.05; text-wrap: balance; text-transform: uppercase; }
+h1 { font-size: clamp(40px, 8vw, 68px); font-weight: 700; letter-spacing: 0.02em; }
+h2 { font-size: 28px; letter-spacing: 0.04em; }
 p { margin: 0; }
-a { color: inherit; }
 .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brass); }
 .muted { color: var(--muted); }
-button { font: inherit; }
-button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-button.act { font-weight: 600; font-size: 15px; line-height: 1; padding: 12px 16px; border-radius: 4px;
-  border: 1px solid var(--btn); background: var(--btn); color: var(--btn-ink); cursor: pointer; }
-button.act.alt { background: transparent; color: var(--ink); }
-button.link { background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 14px; }
+header { display: grid; gap: 10px; }
+.lede { font-size: 19px; color: var(--muted); max-width: 52ch; }
 
-/* header */
-header { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px 48px; align-items: end; }
-header .title { display: grid; gap: 10px; }
-.riddle { display: grid; gap: 12px; font-size: 18px; max-width: 60ch; }
-.riddle blockquote { margin: 0; padding-left: 16px; border-left: 2px solid var(--brass); font-style: italic; display: grid; gap: 6px; }
-.riddle blockquote p:last-child { font-style: normal; font-weight: 600; }
+/* the statement */
+.statement { background: var(--surface); border: 1px solid var(--rule); border-top: 3px solid var(--brass); border-radius: 6px;
+  padding: 24px clamp(18px, 4vw, 32px); display: grid; gap: 16px; }
+.statement .tag { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brass); }
+.statement ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; counter-reset: rule; }
+.statement li { counter-increment: rule; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 4px 12px; }
+.statement li::before { content: counter(rule); font-family: var(--display); font-size: 30px; font-weight: 700; line-height: 1; color: var(--brass); }
+.statement li b { font-weight: 600; }
+.question { font-family: var(--display); font-size: 30px; font-weight: 600; line-height: 1.1; padding-top: 4px; }
+dfn { font-style: normal; font-weight: 600; }
 
-/* bench */
-.bench { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px;
-  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
-.left { border-right: 1px solid var(--rule); display: grid; align-content: start; }
-.canvas-box { position: relative; width: 100%; aspect-ratio: 1 / 1; max-height: 520px; touch-action: none; cursor: grab; }
-.canvas-box:active { cursor: grabbing; }
-.canvas-box canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.hint-tag { position: absolute; left: 16px; top: 14px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--muted); pointer-events: none; }
-.verdict { border-top: 1px solid var(--rule); padding: 18px 20px 22px; display: grid; gap: 14px; }
-.verdict-head { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; justify-content: space-between; }
-.verdict-head h3 { font-size: 26px; font-weight: 700; }
-.pill { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; white-space: nowrap; }
+/* sections */
+section { display: grid; gap: 16px; }
+section > .num { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brass); margin-bottom: -8px; }
+.fig-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.fig-row.one { grid-template-columns: minmax(0, 1fr); max-width: 380px; }
+.fig-row.joined { gap: 0; }
+figure { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; display: grid; align-content: start; overflow: hidden; }
+figure canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: none; cursor: grab; }
+figure canvas:active { cursor: grabbing; }
+figcaption { border-top: 1px solid var(--rule); padding: 12px 14px 14px; display: grid; gap: 10px; font-size: 15px; }
+.pill { justify-self: start; font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 4px 9px; border-radius: 999px; }
 .pill.good { color: var(--good); background: var(--good-bg); }
 .pill.bad { color: var(--bad); background: var(--bad-bg); }
-.checks { list-style: none; margin: 0; padding: 0; display: grid; border-top: 1px solid var(--rule); }
-.checks li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
-.checks .mark { grid-row: span 2; font-family: var(--mono); font-size: 12px; font-weight: 500; text-transform: uppercase; padding-top: 2px; }
-.checks .mark.good { color: var(--good); }
-.checks .mark.bad { color: var(--bad); }
-.checks .rule { font-weight: 600; font-size: 15px; }
-.checks .why { color: var(--muted); font-size: 15px; }
-.sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: 0; margin-right: 4px; }
+.pill.neutral { color: var(--muted); background: var(--bg); border: 1px solid var(--rule); }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
 .sw.blue { background: var(--blue); } .sw.orange { background: var(--orange); }
-.status { font-size: 15px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button.act { font: inherit; font-weight: 600; font-size: 15px; line-height: 1; padding: 11px 15px; border-radius: 4px;
+  border: 1px solid var(--btn); background: var(--btn); color: var(--btn-ink); cursor: pointer; }
+button.act.alt { background: transparent; color: var(--ink); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.slider { display: grid; gap: 4px; }
+.slider label { font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+.slider input { width: 100%; accent-color: var(--brass); }
+.next { justify-items: start; }
+a.go { font-weight: 600; font-size: 17px; padding: 14px 20px; border-radius: 4px; background: var(--btn); color: var(--btn-ink); text-decoration: none; }
+a.go:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
-.right { padding: 20px; display: grid; gap: 14px; align-content: start; }
-.right > p { color: var(--muted); font-size: 15px; }
-.shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
-button.cand { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; text-align: left;
-  padding: 8px 10px; border-radius: 4px; border: 1px solid var(--rule); background: var(--bg); color: var(--ink); cursor: pointer; font-size: 14px; line-height: 1.25; }
-button.cand .n { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
-button.cand[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
-button.cand.found { border-color: var(--good); }
-button.cand.found .n::after { content: " · works"; color: var(--good); }
-button.cand.failed { color: var(--muted); }
-button.cand.failed .n::after { content: " · no"; }
-button.cand:hover { border-color: var(--muted); }
-
-/* finds, hints, answer */
-.row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; align-items: start; }
-.block { display: grid; gap: 12px; align-content: start; }
-.block > p { color: var(--muted); }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { font-size: 14px; padding: 4px 10px; border-radius: 999px; background: var(--good-bg); color: var(--good); }
-ol.hints { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
-.answer { display: grid; gap: 12px; border-left: 2px solid var(--brass); padding-left: 16px; }
-.answer .big { font-family: var(--display); font-size: 44px; font-weight: 700; line-height: 1; }
-.answer ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
-footer { border-top: 1px solid var(--rule); padding-top: 18px; font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 20px; }
-
-@media (max-width: 860px) {
-  header, .bench, .row3 { grid-template-columns: minmax(0, 1fr); }
-  .left { border-right: 0; border-bottom: 1px solid var(--rule); }
-}
-@media (max-width: 420px) { body { padding-inline: 16px; } .shelf { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) { .fig-row:not(.joined) { grid-template-columns: minmax(0, 1fr); } .fig-row.one { max-width: none; } }
+@media (max-width: 420px) { body { padding-inline: 16px; } }
 </style>
 </head>
 <body>
-<div class="wrap">
+<main class="wrap">
+
   <header>
-    <div class="title">
-      <a class="eyebrow" href="index.html" style="text-decoration:none">ray-trinkets</a>
-      <h1>The Spike Ball Riddle</h1>
-    </div>
-    <div class="riddle">
-      <blockquote>
-        <p>Imagine a ball with spikes sticking straight out of it, all the same length.</p>
-        <p>The spikes don't all lie flat in one plane.</p>
-        <p>It doesn't matter which spike you hold it by: it always looks exactly the same.</p>
-        <p>And if you twirl it around the spike you're holding, it matches itself again before you've gone a full turn.</p>
-        <p>How many different designs are there?</p>
-      </blockquote>
-      <p class="muted">Have an idea? Put it on the test bench below. It checks each design against the riddle and tells you why it fails.</p>
-    </div>
+    <span class="eyebrow">ray-trinkets</span>
+    <h1>The Spike Ball Riddle</h1>
+    <p class="lede">A math riddle about rotational symmetry.</p>
   </header>
 
-  <section class="bench" aria-label="Test bench">
-    <div class="left">
-      <div class="canvas-box" id="box" role="img" aria-label="3D view of the selected design">
-        <canvas id="cv"></canvas>
-        <span class="hint-tag">Drag to look around</span>
-      </div>
-      <div class="verdict" aria-live="polite">
-        <div class="verdict-head"><h3 id="vName"></h3><span class="pill" id="vPill"></span></div>
-        <ul class="checks" id="checks"></ul>
-        <p class="status" id="vNote"></p>
-      </div>
-    </div>
-    <div class="right">
-      <h2>Test bench</h2>
-      <p>Each design points its spikes at the corners of a shape, or at a mix of places. Pick one to test it.</p>
-      <div class="shelf" id="shelf"></div>
+  <div class="statement">
+    <span class="tag">The riddle</span>
+    <p>A <dfn>spike ball</dfn> is a ball with a finite number of spikes sticking straight out from its center, all the same length. Two spike balls are the <dfn>same design</dfn> if you can turn one so that its spikes land exactly where the other's are.</p>
+    <p>A <dfn>turn</dfn> rotates the whole ball about a line through its center. A turn <dfn>matches the ball to itself</dfn> if, after it, every spike sits where some spike sat before.</p>
+    <p>Which spike balls obey all three rules?</p>
+    <ol>
+      <li><span><b>Not on one circle.</b> The spike tips don't all lie on a single circle.</span></li>
+      <li><span><b>The same from every spike.</b> For any two spikes, some turn of the ball moves the first spike to where the second one was, and matches the ball to itself.</span></li>
+      <li><span><b>Every spike is a pivot.</b> For every spike, some turn about that spike's own line, by more than 0° and less than a full 360°, matches the ball to itself.</span></li>
+    </ol>
+    <p class="question">How many different designs are there?</p>
+  </div>
+
+  <section>
+    <span class="num">The setup</span>
+    <h2>A spike ball</h2>
+    <p>Every spike starts at the center of the ball and points straight out. The spikes can point anywhere, but they are all the same length. This one has seven.</p>
+    <div class="fig-row one">
+      <figure>
+        <canvas id="f-setup" role="img" aria-label="A ball with seven spikes pointing in different directions. Drag to look around it."></canvas>
+        <figcaption><span class="muted">Drag to look around it.</span></figcaption>
+      </figure>
     </div>
   </section>
 
-  <div class="row3">
-    <section class="block" aria-label="Your finds">
-      <h2>Your finds</h2>
-      <p id="findsText"></p>
-      <div class="chips" id="chips"></div>
-      <p><button class="link" id="clear" type="button">Clear my progress</button></p>
-    </section>
-
-    <section class="block" aria-label="Hints">
-      <h2>Stuck?</h2>
-      <ol class="hints" id="hints"></ol>
-      <p><button class="act alt" id="hintBtn" type="button">Show a hint</button></p>
-    </section>
-
-    <section class="block" aria-label="The answer">
-      <h2>The answer</h2>
-      <p id="answerIntro">Only when you're ready.</p>
-      <p><button class="act" id="revealBtn" type="button">Show the answer</button></p>
-      <div class="answer" id="answer" hidden>
-        <div class="big">Seven.</div>
-        <p>Their spikes point at the corners of the tetrahedron (4), octahedron (6), cube (8), cuboctahedron (12), icosahedron (12), dodecahedron (20) and icosidodecahedron (30).</p>
-        <ul>
-          <li><a href="viewer/spike-balls.html">The seven as spike balls, acting out the riddle</a></li>
-          <li><a href="viewer/index.html">All seven in three forms, in 3D</a></li>
-          <li><a href="viewer/kissing-flats.html">Kissing flats: the seven as pocket stones</a></li>
-          <li><a href="viewer/explore.html">The near misses, with sliders</a></li>
-          <li><a href="https://github.com/vaughnparker/ray-trinkets/blob/main/riddle.md">Why there are exactly seven</a></li>
-        </ul>
+  <section>
+    <span class="num">The setup</span>
+    <h2>The same design</h2>
+    <p>Only the pattern of the spikes matters, not which way the ball happens to be facing. Turn the ball and you still have the same design. The two balls below are the same design: one turn takes the left one onto the right one.</p>
+    <p class="muted">You can't flip a ball to its mirror image, and you can't make the spikes longer or shorter. Spikes always point straight out from the center.</p>
+    <figure>
+      <div class="fig-row joined">
+        <canvas id="f-same-a" role="img" aria-label="A spike ball. It will turn so that it faces the same way as the ball at right."></canvas>
+        <canvas id="f-same-b" role="img" aria-label="The same spike ball, facing a different way."></canvas>
       </div>
-    </section>
-  </div>
+      <figcaption>
+        <span>The <span class="sw blue"></span>blue spike is the same spike on both balls.</span>
+        <div class="controls">
+          <button class="act" id="same-go" type="button">Turn the left ball</button>
+          <button class="act alt" id="same-reset" type="button">Reset</button>
+        </div>
+      </figcaption>
+    </figure>
+  </section>
 
-  <footer>
-    <a href="index.html">← ray-trinkets home</a>
-    <a href="https://github.com/vaughnparker/ray-trinkets">Source on GitHub</a>
-  </footer>
-</div>
+  <section>
+    <span class="num">Rule 1</span>
+    <h2>Not on one circle</h2>
+    <p>Look at the tip of every spike. Rule 1 says the tips can't all sit on one circle. The circle can be any size, and it doesn't have to go around the middle of the ball.</p>
+    <div class="fig-row">
+      <figure>
+        <canvas id="f-r1-bad" role="img" aria-label="Five spikes whose tips all lie on one circle, drawn in red."></canvas>
+        <figcaption>
+          <span class="pill bad">Breaks rule 1</span>
+          <span>All five tips are on the red circle.</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <canvas id="f-r1-ok" role="img" aria-label="Seven spikes whose tips don't lie on one circle."></canvas>
+        <figcaption>
+          <span class="pill good">Passes rule 1</span>
+          <span>No single circle goes through all seven tips.</span>
+        </figcaption>
+      </figure>
+    </div>
+    <p class="muted">Any three tips lie on a circle, so a ball with three spikes or fewer always breaks this rule. That keeps out the boring cases. Rule 1 on its own is easy to pass.</p>
+  </section>
+
+  <section>
+    <span class="num">Rule 2</span>
+    <h2>The same from every spike</h2>
+    <p>Hold the ball by one spike and look at it. Now hold it by a different spike. Rule 2 says you get the same view both times. That means there's a turn that carries the first spike to where the second one was, with all the spikes landing on spikes again.</p>
+    <div class="fig-row">
+      <figure>
+        <canvas id="f-r2-ok" role="img" aria-label="A flat ring of six spikes. A blue spike turns to the place of the neighboring orange spike."></canvas>
+        <figcaption>
+          <span class="pill good">Passes rule 2</span>
+          <span>Turn the ring a sixth of the way around: the <span class="sw blue"></span>blue spike lands where the <span class="sw orange"></span>orange one was, and every other spike lands on a spike. The hollow circles mark where the spikes started.</span>
+          <div class="controls">
+            <button class="act" id="r2-go" type="button">Turn</button>
+            <button class="act alt" id="r2-reset" type="button">Reset</button>
+          </div>
+        </figcaption>
+      </figure>
+      <figure>
+        <canvas id="f-r2-bad" role="img" aria-label="Four spikes around the middle of a ball and one pointing up. The blue spike points up, and the orange spike is one of the four around the middle."></canvas>
+        <figcaption>
+          <span class="pill bad">Breaks rule 2</span>
+          <span>The <span class="sw blue"></span>blue spike has four spikes close around it. The <span class="sw orange"></span>orange one has only three. No turn can carry one to the other.</span>
+        </figcaption>
+      </figure>
+    </div>
+    <p class="muted">The ring on the left breaks rule 1, but it's here to show rule 2 on its own.</p>
+  </section>
+
+  <section>
+    <span class="num">Rule 3</span>
+    <h2>Every spike is a pivot</h2>
+    <p>Pick a spike. The line through it and the center of the ball is its axis. Turning the ball about that axis leaves the spike itself in place. Rule 3 says that for every spike, some turn about its axis, by less than a full turn, matches the ball to itself.</p>
+    <p>Turning by 0° or by a full 360° matches any ball to itself, so those don't count. Drag the sliders to look for an angle in between.</p>
+    <div class="fig-row">
+      <figure>
+        <canvas id="f-r3-ok" role="img" aria-label="A flat ring of six spikes with a dashed axis through the blue spike."></canvas>
+        <figcaption>
+          <span class="pill" id="r3-ok-pill"></span>
+          <div class="slider"><label for="r3-ok-s"><span>Turn about the <span class="sw blue"></span>blue spike</span><span id="r3-ok-v"></span></label>
+            <input type="range" id="r3-ok-s" min="0" max="360" step="5" value="0"></div>
+          <span>A half turn works for the ring.</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <canvas id="f-r3-bad" role="img" aria-label="A ball with two rings of four spikes, one ring twisted against the other, with a dashed axis through the blue spike."></canvas>
+        <figcaption>
+          <span class="pill" id="r3-bad-pill"></span>
+          <div class="slider"><label for="r3-bad-s"><span>Turn about the <span class="sw blue"></span>blue spike</span><span id="r3-bad-v"></span></label>
+            <input type="range" id="r3-bad-s" min="0" max="360" step="5" value="0"></div>
+          <span>Nothing short of a full turn works for this one.</span>
+        </figcaption>
+      </figure>
+    </div>
+    <p class="muted">The ring on the left breaks rule 1, and the ball on the right breaks rule 3 for every one of its spikes. They are here to show rule 3 on its own.</p>
+  </section>
+
+  <section class="next">
+    <span class="num">Your turn</span>
+    <h2>How many designs?</h2>
+    <p>Find every spike ball that passes all three rules, and count the different designs. The workbench lets you try ideas and checks them against the rules.</p>
+    <a class="go" href="workbench.html">Open the workbench</a>
+  </section>
+
+</main>
 
 <script>
-/* ---------- candidate designs ---------- */
-const PHI = (1 + Math.sqrt(5)) / 2, S2 = Math.SQRT2;
-const uniq = pts => { const out = []; pts.forEach(p => { if (!out.some(q => Math.hypot(p[0]-q[0], p[1]-q[1], p[2]-q[2]) < 1e-9)) out.push(p); }); return out; };
-const signs = v => uniq([1,-1].flatMap(a => [1,-1].flatMap(b => [1,-1].map(c => [v[0]*a, v[1]*b, v[2]*c]))));
-const cyc = v => [[v[0],v[1],v[2]], [v[2],v[0],v[1]], [v[1],v[2],v[0]]];
-const perms = v => uniq([[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]].map(p => p.map(i => v[i])));
-const all = (...vs) => uniq(vs.flatMap(v => signs(v)));
-const cycAll = (...vs) => uniq(vs.flatMap(v => cyc(v).flatMap(signs)));
-const permAll = v => uniq(perms(v).flatMap(signs));
-const ring = (n, z, off = 0) => Array.from({ length: n }, (_, k) => { const a = 2 * Math.PI * (k + off) / n; return [Math.cos(a), Math.sin(a), z]; });
-const prism = n => { const s = 2 * Math.sin(Math.PI / n); return [...ring(n, s / 2), ...ring(n, -s / 2)]; };
-const antiprism = n => { const s = Math.sin(Math.PI / n), z = Math.sqrt(4*s*s - 2 + 2*Math.cos(Math.PI / n)) / 2; return [...ring(n, z), ...ring(n, -z, 0.5)]; };
-const bipyramid = n => [...ring(n, 0), [0,0,1], [0,0,-1]];
-
-const TETRA = [[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]];
-const OCTA = cycAll([1,0,0]), CUBE = all([1,1,1]), CUBO = cycAll([1,1,0]);
-const CANDIDATES = [
-  { id: "tetra", name: "Tetrahedron corners", short: "Tetrahedron", pts: TETRA },
-  { id: "octa", name: "Octahedron corners", short: "Octahedron", pts: OCTA },
-  { id: "cube", name: "Cube corners", short: "Cube", pts: CUBE },
-  { id: "cubo", name: "Cuboctahedron corners", short: "Cuboctahedron", pts: CUBO },
-  { id: "ico", name: "Icosahedron corners", short: "Icosahedron", pts: cycAll([0,1,PHI]) },
-  { id: "dodeca", name: "Dodecahedron corners", short: "Dodecahedron", pts: uniq([...CUBE, ...cycAll([0,1/PHI,PHI])]) },
-  { id: "icosid", name: "Icosidodecahedron corners", short: "Icosidodecahedron", pts: cycAll([0,0,PHI], [0.5,PHI/2,PHI*PHI/2]) },
-  { id: "ttet", name: "Truncated tetrahedron corners", pts: uniq(perms([3,1,1]).flatMap(signs).filter(p => p.filter(x => x < 0).length % 2 === 0)) },
-  { id: "toct", name: "Truncated octahedron corners", pts: permAll([0,1,2]) },
-  { id: "tcube", name: "Truncated cube corners", pts: permAll([S2 - 1, 1, 1]) },
-  { id: "rco", name: "Rhombicuboctahedron corners", pts: permAll([1,1,1+S2]) },
-  { id: "soccer", name: "Soccer ball corners", pts: cycAll([0,1,3*PHI], [1,2+PHI,2*PHI], [PHI,2,PHI**3]) },
-  { id: "prism3", name: "Triangular prism corners", pts: prism(3) },
-  { id: "prism5", name: "Pentagonal prism corners", pts: prism(5) },
-  { id: "prism6", name: "Hexagonal prism corners", pts: prism(6) },
-  { id: "anti4", name: "Square antiprism corners", pts: antiprism(4) },
-  { id: "anti5", name: "Pentagonal antiprism corners", pts: antiprism(5) },
-  { id: "bipy3", name: "Triangular double pyramid corners", pts: bipyramid(3) },
-  { id: "bipy5", name: "Pentagonal double pyramid corners", pts: bipyramid(5) },
-  { id: "pyr4", name: "Square pyramid corners", pts: [...ring(4, 0), [0,0,1]] },
-  { id: "cubeocta", name: "Cube corners plus face centres", pts: uniq([...CUBE, ...OCTA]) },
-  { id: "octamid", name: "Octahedron plus a spike between each pair of neighbours", pts: uniq([...OCTA, ...CUBO]) },
-  { id: "hexring", name: "A flat ring of six", pts: ring(6, 0) },
-].map(c => ({ ...c, pts: c.pts.map(p => { const n = Math.hypot(...p); return [p[0]/n, p[1]/n, p[2]/n]; }) }))
- .sort((a, b) => a.pts.length - b.pts.length || a.name.localeCompare(b.name));
-
-/* ---------- the three checks ---------- */
-const dot = (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
-const cross = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
-const apply = (M, v) => [M[0][0]*v[0]+M[0][1]*v[1]+M[0][2]*v[2], M[1][0]*v[0]+M[1][1]*v[1]+M[1][2]*v[2], M[2][0]*v[0]+M[2][1]*v[1]+M[2][2]*v[2]];
-const near = (a, b) => Math.abs(a[0]-b[0]) + Math.abs(a[1]-b[1]) + Math.abs(a[2]-b[2]) < 1e-6;
-const cols = (a, b, c) => [[a[0], b[0], c[0]], [a[1], b[1], c[1]], [a[2], b[2], c[2]]];
-const det3 = M => M[0][0]*(M[1][1]*M[2][2]-M[1][2]*M[2][1]) - M[0][1]*(M[1][0]*M[2][2]-M[1][2]*M[2][0]) + M[0][2]*(M[1][0]*M[2][1]-M[1][1]*M[2][0]);
-function inv3(M) {
-  const d = det3(M), C = (r, c) => { const m = M.filter((_, i) => i !== r).map(row => row.filter((_, j) => j !== c)); return ((r + c) % 2 ? -1 : 1) * (m[0][0]*m[1][1] - m[0][1]*m[1][0]); };
-  return [0,1,2].map(i => [0,1,2].map(j => C(j, i) / d));
+/* ---------- small 3D helpers ---------- */
+const dot3 = (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+const unit = v => { const n = Math.hypot(...v); return v.map(x => x / n); };
+const apply = (M, v) => [dot3(M[0], v), dot3(M[1], v), dot3(M[2], v)];
+function rotAxis(axis, a) {
+  const [x, y, z] = unit(axis), c = Math.cos(a), s = Math.sin(a), C = 1 - c;
+  return [[x*x*C + c, x*y*C - z*s, x*z*C + y*s], [y*x*C + z*s, y*y*C + c, y*z*C - x*s], [z*x*C - y*s, z*y*C + x*s, z*z*C + c]];
 }
-const mul = (A, B) => A.map(r => [0,1,2].map(j => r[0]*B[0][j] + r[1]*B[1][j] + r[2]*B[2][j]));
+const IDENT = [[1,0,0],[0,1,0],[0,0,1]];
+const ease = t => t * t * (3 - 2 * t);
 
-// Every turn of the ball that lands each spike on a spike.
-function rotations(P) {
-  const p0 = P[0];
-  let best = -2, p1 = null;
-  P.forEach(q => { const d = dot(p0, q); if (Math.abs(d) < 1 - 1e-9 && d > best) { best = d; p1 = q; } });
-  if (!p1) return [[[1,0,0],[0,1,0],[0,0,1]]];
-  const inv = inv3(cols(p0, p1, cross(p0, p1))), G = [];
-  for (const a of P) for (const b of P) {
-    if (Math.abs(dot(a, b) - best) > 1e-9) continue;
-    const R = mul(cols(a, b, cross(a, b)), inv);
-    if (Math.abs(det3(R) - 1) > 1e-6) continue;
-    if (P.every(p => { const q = apply(R, p); return P.some(r => near(q, r)); })) G.push(R);
-  }
-  return G;
-}
-const deg = x => Math.acos(Math.max(-1, Math.min(1, x))) * 180 / Math.PI;
-const fmtDeg = x => `${Math.round(x * 10) / 10}°`;
-const FRAC = { 2: "½", 3: "⅓", 4: "¼", 5: "⅕", 6: "⅙" };
-const frac = k => FRAC[k] || `1/${k}`;
-const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+/* ---------- designs ---------- */
+const ring = (n, z) => Array.from({ length: n }, (_, k) => { const a = 2 * Math.PI * k / n; return [Math.cos(a), Math.sin(a), z]; });
+const IRREGULAR = [[1,.2,.1],[-.3,1,.2],[.1,-.4,1],[-.8,-.5,.3],[.5,.7,-.6],[-.2,-.6,-.8],[.7,-.5,-.4]].map(unit);
+const LATITUDE_RING = ring(5, 0.45).map(unit);
+const FLAT_RING = ring(6, 0);
+const PYRAMID = [...ring(4, 0), [0, 0, 1]];
+const TWISTED = (() => {  // two rings of four, one twisted an eighth of a turn against the other
+  const z = 0.5946;
+  return [...ring(4, z), ...ring(4, -z).map(([x, y, h], k) => { const a = 2 * Math.PI * (k + 0.5) / 4; return [Math.cos(a), Math.sin(a), h]; })].map(unit);
+})();
 
-// Angles from spike i to every other spike, sorted, grouped: [[angle, count], ...]
-function view(P, i) {
-  const angs = P.filter((_, j) => j !== i).map(q => Math.round(deg(dot(P[i], q)) * 100) / 100).sort((a, b) => a - b);
-  const out = []; angs.forEach(a => { const last = out[out.length - 1]; if (last && Math.abs(last[0] - a) < 0.02) last[1]++; else out.push([a, 1]); });
-  return out;
-}
-
-function test(c) {
-  const P = c.pts, n = P.length;
-  const M = [0,1,2].map(i => [0,1,2].map(j => P.reduce((s, p) => s + p[i]*p[j], 0)));
-  const flat = Math.abs(det3(M)) < 1e-9 * n * n * n;
-  const G = rotations(P);
-  const orbitOf = P.map(() => -1); let orbits = 0;
-  P.forEach((p, i) => { if (orbitOf[i] >= 0) return; G.forEach(R => { const q = apply(R, p); P.forEach((r, j) => { if (near(q, r)) orbitOf[j] = orbits; }); }); orbits++; });
-  const stab = P.map(p => G.filter(R => near(apply(R, p), p)).length);
-  const res = { A: -1, B: -1, checks: [] };
-
-  res.checks.push(flat
-    ? { ok: false, rule: "Not all in one plane", why: "Every spike lies in one flat plane, so this is a ring, not a ball." }
-    : { ok: true, rule: "Not all in one plane", why: "The spikes point out in every direction." });
-
-  if (orbits === 1) {
-    res.checks.push({ ok: true, rule: "Looks the same whichever spike you hold", why: `A turn of the ball carries any spike onto any other, and every spike lands on a spike.` });
-  } else {
-    const A = 0, B = orbitOf.indexOf(1); res.A = A; res.B = B;
-    const vA = view(P, A), vB = view(P, B);
-    let why;
-    if (vA[0][0] !== vB[0][0] || vA[0][1] !== vB[0][1]) {
-      why = `Held by the <span class="sw blue"></span>blue spike, its nearest spikes are ${plural(vA[0][1], "spike", "spikes")} at ${fmtDeg(vA[0][0])}. Held by the <span class="sw orange"></span>orange one, they're ${plural(vB[0][1], "spike", "spikes")} at ${fmtDeg(vB[0][0])}.`;
-    } else {
-      const k = vA.findIndex((x, i) => !vB[i] || x[0] !== vB[i][0] || x[1] !== vB[i][1]);
-      why = k < 0
-        ? `The <span class="sw blue"></span>blue and <span class="sw orange"></span>orange spikes see mirror-image views, and no turn can swap a view for its mirror image.`
-        : `The <span class="sw blue"></span>blue spike has ${plural(vA[k][1], "spike", "spikes")} at ${fmtDeg(vA[k][0])}; the <span class="sw orange"></span>orange one sees something different at that distance.`;
-    }
-    if (orbits > 2) why += ` There are ${orbits} different views in all.`;
-    res.checks.push({ ok: false, rule: "Looks the same whichever spike you hold", why });
-  }
-
-  const stuck = stab.findIndex(k => k === 1);
-  if (stuck < 0) {
-    const ks = [...new Set(stab)].sort((a, b) => b - a);
-    res.checks.push({ ok: true, rule: "Twirls back to itself before a full turn", why: ks.length === 1
-      ? `Twirl it around any spike and it matches itself every ${frac(ks[0])} turn.`
-      : `It matches itself every ${ks.map(frac).join(" or ")} turn, depending on the spike.` });
-  } else {
-    let who;
-    if (res.A === stuck || (res.A >= 0 && stab[res.A] === 1)) who = `the <span class="sw blue"></span>blue spike`;
-    else if (res.B >= 0 && stab[res.B] === 1) who = `the <span class="sw orange"></span>orange spike`;
-    else if (res.A < 0) { res.A = stuck; who = `the <span class="sw blue"></span>blue spike`; }
-    else who = "some of the spikes";
-    res.checks.push({ ok: false, rule: "Twirls back to itself before a full turn", why: `Twirl it around ${who} and it doesn't match itself until a full turn.` });
-  }
-  res.works = res.checks.every(x => x.ok);
-  return res;
-}
-
-/* ---------- drawing (same brass look as the spike-ball viewer) ---------- */
+/* ---------- drawing ---------- */
 const BRASS = { hi: [255,243,206], mid: [224,178,88], lo: [150,104,32], edge: [80,53,14] };
 const BLUE = { hi: [222,238,252], mid: [82,136,188], lo: [36,74,116], edge: [15,33,56] };
 const ORANGE = { hi: [255,226,204], mid: [224,120,62], lo: [150,62,22], edge: [72,28,8] };
 const col = (c, f) => `rgb(${Math.round(c[0]*f)},${Math.round(c[1]*f)},${Math.round(c[2]*f)})`;
+let theme = {};
+function readTheme() { const s = getComputedStyle(document.documentElement); theme = { muted: s.getPropertyValue("--muted").trim(), bad: s.getPropertyValue("--bad").trim() }; }
+readTheme();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", readTheme);
+
 function sphere(ctx, x, y, r, pal, f) {
   const g = ctx.createRadialGradient(x - r*0.36, y - r*0.42, r*0.04, x, y, r);
   g.addColorStop(0, col(pal.hi, f)); g.addColorStop(0.28, col(pal.mid, f)); g.addColorStop(0.78, col(pal.lo, f)); g.addColorStop(1, col(pal.edge, f));
@@ -351,102 +276,118 @@ function camera(W, H, az, el, k) {
   return p => { const x1 = ca*p[0] + sa*p[1], y1 = -sa*p[0] + ca*p[1], z1 = p[2];
     const xs = -x1, ys = z1*ce - y1*se, zs = z1*se + y1*ce, s = k*D/(D - zs); return [W/2 + xs*s, H/2 - ys*s, zs, s]; };
 }
-function draw(ctx, W, H, P, view, tint) {
-  const cam = camera(W, H, view.az, view.el, Math.min(W, H) / 76);
+const TIP = 30, ROOT = 9.4;
+function draw(ctx, W, H, f) {
+  const cam = camera(W, H, f.view.az, f.view.el, Math.min(W, H) / 76);
+  const R = f.rot(), pts = f.pts.map(p => apply(R, p));
   ctx.clearRect(0, 0, W, H);
+  ctx.lineWidth = Math.max(1.5, W / 220);
+  if (f.ghost) {   // hollow circles where the spikes started
+    ctx.strokeStyle = theme.muted; ctx.setLineDash([]);
+    f.pts.forEach(p => { const t = cam(p.map(x => x * TIP)); ctx.beginPath(); ctx.arc(t[0], t[1], 3.4 * t[3], 0, Math.PI * 2); ctx.stroke(); });
+  }
   const items = [], c = cam([0, 0, 0]);
-  items.push({ z: c[2], d: () => sphere(ctx, c[0], c[1], 10*c[3], BRASS, 0.97) });
-  P.forEach((v, i) => {
-    const a = cam([v[0]*9.4, v[1]*9.4, v[2]*9.4]), b = cam([v[0]*30, v[1]*30, v[2]*30]);
-    const f = 0.7 + 0.3 * Math.max(0, Math.min(1, (b[2] + 30) / 60));
-    items.push({ z: b[2], d: () => { rod(ctx, a, b, 2.5*(a[3]+b[3])/2, BRASS, f); sphere(ctx, b[0], b[1], 2.5*b[3], tint[i] || BRASS, f); } });
+  items.push({ z: c[2], d: () => sphere(ctx, c[0], c[1], 10 * c[3], BRASS, 0.97) });
+  pts.forEach((v, i) => {
+    const a = cam(v.map(x => x * ROOT)), b = cam(v.map(x => x * TIP));
+    const k = 0.7 + 0.3 * Math.max(0, Math.min(1, (b[2] + TIP) / (2 * TIP)));
+    items.push({ z: b[2], d: () => { rod(ctx, a, b, 2.5 * (a[3] + b[3]) / 2, BRASS, k); sphere(ctx, b[0], b[1], 2.5 * b[3], f.tint[i] || BRASS, k); } });
   });
   items.sort((p, q) => p.z - q.z).forEach(it => it.d());
+  if (f.axis) {    // dashed line through a spike and the center
+    const a = cam(f.axis.map(x => x * -36)), b = cam(f.axis.map(x => x * 36));
+    ctx.strokeStyle = theme.muted; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); ctx.setLineDash([]);
+  }
+  if (f.circle) {  // the circle through the tips
+    ctx.strokeStyle = theme.bad; ctx.lineWidth *= 1.4; ctx.beginPath();
+    f.circle.forEach((p, i) => { const t = cam(p.map(x => x * TIP)); i ? ctx.lineTo(t[0], t[1]) : ctx.moveTo(t[0], t[1]); });
+    ctx.closePath(); ctx.stroke();
+  }
 }
 
-/* ---------- page state ---------- */
-const KEY = "ray-trinkets-bench-v1";
-let saved = { found: [], failed: [], hints: 0 };
-try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s && Array.isArray(s.found)) saved = { failed: [], hints: 0, ...s }; } catch (e) {}
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} };
-const ANSWERS = 7;
-
-const cv = document.getElementById("cv"), box = document.getElementById("box");
-let cur = null, tint = {}, v = { az: 0.6, el: 0.42 }, spin = !matchMedia("(prefers-reduced-motion: reduce)").matches, last = 0;
-function size() { const r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2);
-  const w = Math.max(1, Math.round(r.width*d)), h = Math.max(1, Math.round(r.height*d)); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } }
-function frame(t) { const dt = last ? Math.min(0.05, (t - last) / 1000) : 0; last = t; if (spin) v.az += dt * 0.25;
-  size(); draw(cv.getContext("2d"), cv.width, cv.height, cur.pts, v, tint); requestAnimationFrame(frame); }
-let drag = null;
-box.addEventListener("pointerdown", e => { drag = [e.clientX, e.clientY]; spin = false; box.setPointerCapture(e.pointerId); });
-box.addEventListener("pointermove", e => { if (!drag) return; v.az -= (e.clientX - drag[0]) * 0.009; v.el = Math.max(-1.3, Math.min(1.3, v.el + (e.clientY - drag[1]) * 0.009)); drag = [e.clientX, e.clientY]; });
-["pointerup", "pointercancel"].forEach(t => box.addEventListener(t, () => drag = null));
-
-function choose(c, record = true) {
-  cur = c;
-  const r = test(c);
-  tint = {}; if (r.A >= 0) tint[r.A] = BLUE; if (r.B >= 0) tint[r.B] = ORANGE;
-  document.getElementById("vName").textContent = `${c.name} · ${c.pts.length}`;
-  const pill = document.getElementById("vPill");
-  pill.textContent = r.works ? "Works" : "Doesn't work"; pill.className = "pill " + (r.works ? "good" : "bad");
-  document.getElementById("checks").innerHTML = r.checks.map(x =>
-    `<li><span class="mark ${x.ok ? "good" : "bad"}">${x.ok ? "Yes" : "No"}</span><span class="rule">${x.rule}</span><span class="why">${x.why}</span></li>`).join("");
-  const isNew = record && r.works && !saved.found.includes(c.id);
-  if (isNew) saved.found.push(c.id);
-  if (record && !r.works && !saved.failed.includes(c.id)) saved.failed.push(c.id);
-  save();
-  document.getElementById("vNote").textContent = r.works
-    ? (isNew ? "It passes every check. Added to your finds." : "It passes every check. Already in your finds.")
-    : "Try another design.";
-  renderShelf(); renderFinds();
+/* ---------- figures ---------- */
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const newView = (spin = false) => ({ az: 0.6, el: 0.42, spin: spin && !reduce });
+const views = [], figs = [];
+function figure(id, o) {
+  const canvas = document.getElementById(id);
+  const f = { canvas, pts: o.pts, tint: o.tint || {}, rot: o.rot || (() => IDENT), view: o.view || newView(o.spin),
+    ghost: !!o.ghost, axis: o.axis || null, circle: o.circle || null, tick: o.tick || null };
+  if (!views.includes(f.view)) views.push(f.view);
+  let drag = null;
+  canvas.addEventListener("pointerdown", e => { drag = [e.clientX, e.clientY]; f.view.spin = false; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener("pointermove", e => { if (!drag) return;
+    f.view.az -= (e.clientX - drag[0]) * 0.009; f.view.el = Math.max(-1.3, Math.min(1.3, f.view.el + (e.clientY - drag[1]) * 0.009)); drag = [e.clientX, e.clientY]; });
+  ["pointerup", "pointercancel"].forEach(t => canvas.addEventListener(t, () => drag = null));
+  figs.push(f); return f;
+}
+function sizeCanvas(cv) {
+  const r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2);
+  const w = Math.max(1, Math.round(r.width * d)), h = Math.max(1, Math.round(r.height * d));
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+}
+// A turn that animates between 0 and 1 when a button is pressed.
+function mover(seconds = 1.8) {
+  const m = { t: 0, target: 0, step(dt) { m.t += Math.sign(m.target - m.t) * Math.min(Math.abs(m.target - m.t), dt / seconds); }, get e() { return ease(m.t); } };
+  return m;
 }
 
-function renderShelf() {
-  document.querySelectorAll("button.cand").forEach(b => {
-    b.setAttribute("aria-pressed", String(b.dataset.id === cur.id));
-    b.classList.toggle("found", saved.found.includes(b.dataset.id));
-    b.classList.toggle("failed", saved.failed.includes(b.dataset.id));
+// The setup
+figure("f-setup", { pts: IRREGULAR, spin: true });
+
+// The same design: one view shared by both balls, so the turn is easy to follow
+{
+  const axis = [0.3, 1, 0.5], angle = 2.1, view = newView(), m = mover(2.2);
+  const R0 = rotAxis(axis, angle);
+  figure("f-same-a", { pts: IRREGULAR, view, tint: { 0: BLUE }, rot: () => rotAxis(axis, angle * m.e), tick: dt => m.step(dt) });
+  figure("f-same-b", { pts: IRREGULAR.map(p => apply(R0, p)), view, tint: { 0: BLUE } });
+  document.getElementById("same-go").onclick = () => m.target = 1;
+  document.getElementById("same-reset").onclick = () => m.target = 0;
+}
+
+// Rule 1
+figure("f-r1-bad", { pts: LATITUDE_RING, spin: true,
+  circle: Array.from({ length: 96 }, (_, k) => { const a = 2 * Math.PI * k / 96, z = 0.45, r = Math.sqrt(1 - z * z); return [r * Math.cos(a), r * Math.sin(a), z]; }) });
+figure("f-r1-ok", { pts: IRREGULAR, spin: true });
+
+// Rule 2
+{
+  const m = mover();
+  figure("f-r2-ok", { pts: FLAT_RING, tint: { 0: BLUE, 1: ORANGE }, ghost: true, rot: () => rotAxis([0, 0, 1], Math.PI / 3 * m.e), tick: dt => m.step(dt) });
+  document.getElementById("r2-go").onclick = () => m.target = 1;
+  document.getElementById("r2-reset").onclick = () => m.target = 0;
+  figure("f-r2-bad", { pts: PYRAMID, tint: { 4: BLUE, 0: ORANGE }, spin: true });
+}
+
+// Rule 3: a slider turns the ball about the blue spike, and a badge says whether the spikes land on spikes
+function turnAbout(prefix, canvasId, pts) {
+  const slider = document.getElementById(prefix + "-s"), out = document.getElementById(prefix + "-v"), pill = document.getElementById(prefix + "-pill");
+  const axis = unit(pts[0]);
+  const matches = deg => { const R = rotAxis(axis, deg * Math.PI / 180);
+    return pts.every(p => { const q = apply(R, p); return pts.some(r => Math.hypot(q[0]-r[0], q[1]-r[1], q[2]-r[2]) < 1e-6); }); };
+  const update = () => { const d = +slider.value; out.textContent = d + "°";
+    const ok = matches(d), trivial = d === 0 || d === 360;
+    pill.className = "pill " + (!ok ? "bad" : trivial ? "neutral" : "good");
+    pill.textContent = !ok ? "Doesn't match" : trivial ? "Matches (0° and 360° don't count)" : "Matches itself"; };
+  figure(canvasId, { pts, tint: { 0: BLUE }, ghost: true, axis, rot: () => rotAxis(axis, +slider.value * Math.PI / 180) });
+  slider.addEventListener("input", update); update();
+}
+turnAbout("r3-ok", "f-r3-ok", FLAT_RING);
+turnAbout("r3-bad", "f-r3-bad", TWISTED);
+
+/* ---------- loop ---------- */
+let last = 0;
+function frame(t) {
+  const dt = last ? Math.min(0.05, (t - last) / 1000) : 0; last = t;
+  views.forEach(v => { if (v.spin) v.az += dt * 0.25; });
+  figs.forEach(f => {
+    if (f.tick) f.tick(dt);
+    const r = f.canvas.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) return;   // off screen
+    sizeCanvas(f.canvas); draw(f.canvas.getContext("2d"), f.canvas.width, f.canvas.height, f);
   });
+  requestAnimationFrame(frame);
 }
-function renderFinds() {
-  const n = saved.found.length;
-  document.getElementById("findsText").textContent = n === 0
-    ? "Nothing yet. Designs that pass every check collect here."
-    : n >= ANSWERS ? `You've found all of them. There are exactly seven.` : `You've found ${n}. Are there more?`;
-  document.getElementById("chips").innerHTML = CANDIDATES.filter(c => saved.found.includes(c.id))
-    .map(c => `<span class="chip">${c.short || c.name} · ${c.pts.length}</span>`).join("");
-  if (n >= ANSWERS) showAnswer();
-}
-
-const HINTS = [
-  "Start with the corners of shapes you already know. Dice are a good place to look.",
-  "A half turn counts as “before a full turn”.",
-  "Shapes with two kinds of corner fail the second check. Shapes whose corners sit in little clusters usually pass it but fail the twirl.",
-  "The answers fall into three symmetry families: the tetrahedron's, the cube's and the icosahedron's. Some shapes you might not know by name belong to them.",
-];
-function renderHints() {
-  document.getElementById("hints").innerHTML = HINTS.slice(0, saved.hints).map(h => `<li>${h}</li>`).join("");
-  const btn = document.getElementById("hintBtn");
-  btn.hidden = saved.hints >= HINTS.length;
-  btn.textContent = saved.hints ? "Show another hint" : "Show a hint";
-}
-document.getElementById("hintBtn").addEventListener("click", () => { saved.hints = Math.min(HINTS.length, saved.hints + 1); save(); renderHints(); });
-function showAnswer() { document.getElementById("answer").hidden = false; document.getElementById("revealBtn").hidden = true; document.getElementById("answerIntro").hidden = true; }
-document.getElementById("revealBtn").addEventListener("click", showAnswer);
-document.getElementById("clear").addEventListener("click", () => {
-  saved = { found: [], failed: [], hints: 0 }; save();
-  document.getElementById("answer").hidden = true; document.getElementById("revealBtn").hidden = false; document.getElementById("answerIntro").hidden = false;
-  renderShelf(); renderFinds(); renderHints();
-});
-
-const shelf = document.getElementById("shelf");
-CANDIDATES.forEach(c => {
-  const b = document.createElement("button"); b.type = "button"; b.className = "cand"; b.dataset.id = c.id;
-  b.innerHTML = `<span>${c.name}</span><span class="n">${c.pts.length}</span>`;
-  b.addEventListener("click", () => choose(c)); shelf.appendChild(b);
-});
-renderHints();
-choose(CANDIDATES.find(c => c.id === "prism3"), false);
 requestAnimationFrame(frame);
 </script>
 </body>

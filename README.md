@@ -46,13 +46,17 @@ alike.
 ## What's here
 
 Live site: <https://vaughnparker.github.io/ray-trinkets/>. The home page links to every
-other page. The riddle page poses the riddle without giving the answer away; everything
-under `viewer/` shows it.
+other page. The riddle and workbench pages don't give the answer away; everything under
+`viewer/` shows it.
 
 - [`index.html`](index.html): the home page, a short list of links to everything else.
-- [`riddle.html`](riddle.html): the riddle, a test bench that checks any candidate
-  against the rules and says why it fails, hints one at a time, and a button that
-  reveals the answer.
+- [`riddle.html`](riddle.html): the riddle stated carefully, with a picture for each
+  rule. It gives no hint of the answer.
+- [`workbench.html`](workbench.html): click dots on a ball to place spikes (74 dots: the
+  icosahedron's rotation axes plus the cuboctahedron's corners, enough to build all 7),
+  shown front and back at once. Drag across dots to paint spikes, undo, or copy the
+  spikes by turning about an axis. Check the design against the three rules and collect
+  the ones that pass. You submit a count that has to match your collection.
 - [`riddle.md`](riddle.md): the math. How the riddle was narrowed to exactly 7,
   equivalent wordings, wordings that fail, and a face version of the riddle.
 - `viewer/`: the answer, in the browser.
